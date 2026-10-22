@@ -1,0 +1,62 @@
+appId: com.cortex.ide
+productName: Cortex
+copyright: Copyright © Cortex
+directories:
+  output: release
+  buildResources: desktop/build
+# Multi-size ICO (scripts/sync-icons.mjs); PNG kept for BrowserWindow / fallback
+icon: desktop/build/icon.ico
+files:
+  - dist/**/*
+  - desktop/**/*
+  - server/**/*
+  # server/text-index.js → ../src/lib/tokenize.js
+  - src/lib/**/*
+  - prompts/**/*
+  - vite.config.js
+  - index.html
+  - package.json
+  - .env.example
+  - "!scripts/**"
+  - "!docs/**"
+  - "!release/**"
+  - "!demo/**"
+  - "!src/components/**"
+  - "!src/App.jsx"
+  - "!src/main.jsx"
+  - "!src/styles*.css"
+  - "!src/state/**"
+# 本机已用可用的 Electron ABI 二进制（lydell node-pty 预编译 + 已重编 better-sqlite3）
+# 避免打包阶段再跑 node-gyp（缺 Spectre 库会失败）
+npmRebuild: false
+buildDependenciesFromSource: false
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "**/better-sqlite3/**"
+  - "**/node-pty/**"
+  - "**/sqlite-vec/**"
+  - "**/@napi-rs/**"
+extraMetadata:
+  main: desktop/main.mjs
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Cortex
+  deleteAppDataOnUninstall: false
+  installerIcon: icon.ico
+  uninstallerIcon: icon.ico
+  installerHeaderIcon: icon.ico
+  artifactName: ${productName}-${version}-Setup.${ext}
+portable:
+  artifactName: ${productName}-${version}-Portable.${ext}

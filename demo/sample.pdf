@@ -1,0 +1,75 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 396 >>
+stream
+BT /F1 26 Tf 60 760 Td (Cortex IDE) Tj ET
+BT /F1 14 Tf 60 726 Td (Built-in PDF renderer self-test) Tj ET
+0.18 0.83 0.75 rg 60 640 200 26 re f
+0.2 0.4 0.9 rg 60 604 320 12 re f
+0.9 0.6 0.1 rg 60 584 140 12 re f
+BT /F1 11 Tf 60 540 Td (Page 1 of 3 - the vector bars above are drawn by the renderer.) Tj ET
+BT /F1 11 Tf 60 520 Td (Shapes prove the canvas path works, not just text extraction.) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 419 >>
+stream
+0.2 0.65 0.95 rg
+60 430 40 120 re f
+110 430 55 190 re f
+165 430 70 150 re f
+235 430 48 210 re f
+292 430 62 170 re f
+0.1 0.1 0.1 RG 1 w 55 430 m 360 430 l S
+BT /F1 20 Tf 60 770 Td (Benchmark results) Tj ET
+BT /F1 11 Tf 60 740 Td (Search latency p50: 46 ms   p95: 48 ms   budget: 50 ms) Tj ET
+BT /F1 11 Tf 60 716 Td (Recall@10: 0.982   Index: 1,000,000 vectors x 512 dims) Tj ET
+BT /F1 10 Tf 60 400 Td (Page 2 of 3) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 450 >>
+stream
+BT /F1 20 Tf 60 770 Td (How to verify) Tj ET
+BT /F1 11 Tf 60 734 Td (1. Open demo/sample.pdf in the editor.) Tj ET
+BT /F1 11 Tf 60 712 Td (2. Use the arrows in the toolbar to change pages.) Tj ET
+BT /F1 11 Tf 60 690 Td (3. The strip under the canvas shows the extracted text.) Tj ET
+BT /F1 11 Tf 60 668 Td (4. Broken or encrypted files say so instead of showing blank.) Tj ET
+BT /F1 10 Tf 60 80 Td (Cortex IDE - demo fixture, generated locally) Tj ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000224 00000 n 
+0000000350 00000 n 
+0000000797 00000 n 
+0000000923 00000 n 
+0000001393 00000 n 
+0000001519 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+2020
+%%EOF

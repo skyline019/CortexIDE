@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+release
+.tools
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 本地密钥
+.env
+.env.local
+
+# 本地数据
+.cortex/
+
+# pdf.js 资源（npm run pdfjs:sync 从 node_modules 拷贝）
+public/pdfjs/
+
+# 本地拆分前备份（可按需提交；默认忽略避免污染 diff）
+src/**/_backup/

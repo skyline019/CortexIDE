@@ -1,0 +1,340 @@
+/* 输入区：引用条 / @ 补全 / 拖拽提示 / 引用预览
+   颜色全部用 styles.css 里的变量，避免两套主题飘。 */
+
+.composer .composer-box { position: relative; }
+
+/* ---------------- 引用条 ---------------- */
+.ref-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 0 2px 7px;
+  border-bottom: 1px dashed var(--line-soft);
+  margin-bottom: 6px;
+}
+.ref-bar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--fg-mute);
+  letter-spacing: 0.04em;
+  flex: none;
+}
+.ref-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg-2);
+  overflow: hidden;
+  max-width: 260px;
+}
+.ref-chip .ref-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 6px;
+  background: none;
+  border: 0;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+  min-width: 0;
+}
+.ref-chip .ref-main:hover { color: var(--fg); }
+.ref-chip .ref-name {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--fg);
+}
+.ref-chip .ref-meta { font-size: 9.5px; color: var(--fg-mute); white-space: nowrap; }
+.ref-chip .ref-x {
+  border: 0;
+  background: none;
+  color: var(--fg-mute);
+  cursor: pointer;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+}
+.ref-chip .ref-x:hover { color: var(--danger); background: rgba(248, 113, 113, 0.1); }
+.ref-chip .ref-glyph { color: var(--accent); font-size: 10px; }
+.ref-chip.attach .ref-glyph { color: var(--amber); }
+.ref-chip.memory .ref-glyph { color: var(--violet); }
+.ref-chip.skill .ref-glyph { color: var(--blue); }
+.ref-chip.bad { border-color: rgba(248, 113, 113, 0.5); }
+.ref-chip.bad .ref-name { color: var(--danger); text-decoration: line-through; }
+.ref-chip.bad .ref-glyph { color: var(--danger); }
+
+.ref-sum {
+  font-size: 10px;
+  color: var(--fg-mute);
+  padding: 0 2px;
+  font-variant-numeric: tabular-nums;
+}
+.ref-sum.warn { color: var(--amber); }
+.ref-clear {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--fg-mute);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.ref-clear:hover { color: var(--danger); }
+
+/* ---------------- @ 补全面板 ---------------- */
+.mention-panel {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: calc(100% + 6px);
+  z-index: 40;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+.mention-head,
+.mention-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 9px;
+  font-size: 10px;
+  color: var(--fg-mute);
+  background: var(--bg-3);
+}
+.mention-head { border-bottom: 1px solid var(--line-soft); }
+.mention-foot { border-top: 1px solid var(--line-soft); margin-top: auto; }
+.mention-hint { opacity: 0.75; }
+.mention-empty { padding: 12px 10px; font-size: 11px; color: var(--fg-mute); text-align: center; }
+.mention-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: 0;
+  background: none;
+  color: var(--fg-dim);
+  font: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  padding: 5px 9px;
+  cursor: pointer;
+}
+.mention-row.on { background: var(--accent-soft); color: var(--fg); }
+.mention-row .mention-glyph { color: var(--accent); font-size: 10px; flex: none; }
+.mention-row.attach .mention-glyph { color: var(--amber); }
+.mention-row.memory .mention-glyph { color: var(--violet); }
+.mention-row.skill .mention-glyph { color: var(--blue); }
+.mention-row .mention-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mention-row .mention-path {
+  font-size: 10px;
+  color: var(--fg-mute);
+  font-family: var(--mono);
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: none;
+}
+.link-btn {
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+}
+.link-btn:hover { text-decoration: underline; }
+
+/* ---------------- 拖拽 ---------------- */
+.composer-box.drop-live {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.drop-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--radius);
+  background: rgba(8, 11, 17, 0.86);
+  color: var(--accent);
+  font-size: 11.5px;
+  pointer-events: none;
+}
+.drop-hint span { color: var(--fg-mute); font-size: 10px; }
+
+/* ---------------- 附件 / 引用按钮 ---------------- */
+.composer .composer-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.composer-foot .foot-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.composer-foot .foot-row.main .send-btn { margin-left: auto; }
+.composer-foot .foot-row.tools { row-gap: 5px; }
+.composer-foot .add-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.composer-foot .chip.add {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  color: var(--fg-dim);
+}
+.composer-foot .chip.add:hover { color: var(--accent); border-color: rgba(45, 212, 191, 0.45); }
+.composer-foot label.chip { line-height: 1.5; }
+
+.composer-busy,
+.composer-progress {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--fg-mute);
+  padding: 4px 2px 0;
+}
+.composer-hint {
+  display: flex;
+  gap: 8px;
+  margin-top: 7px;
+  font-size: 10.5px;
+  color: var(--fg-mute);
+}
+
+/* ---------------- 引用预览 ---------------- */
+.ref-preview-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(4, 6, 10, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ref-preview {
+  width: min(760px, 86vw);
+  max-height: 74vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+.ref-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-2);
+  font-size: 11.5px;
+}
+.ref-preview-head b {
+  font-family: var(--mono);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ref-preview-meta { margin-left: auto; font-size: 10px; color: var(--fg-mute); }
+.ref-type {
+  font-size: 9.5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--accent);
+}
+.ref-type.attach { color: var(--amber); }
+.ref-type.memory { color: var(--violet); }
+.ref-type.skill { color: var(--blue); }
+.ref-preview-body {
+  margin: 0;
+  padding: 10px 12px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--fg-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ref-preview-note {
+  padding: 6px 12px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 10px;
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
+/* 用户消息上的引用小条（发出去之后仍然能看到这轮带了什么） */
+.msg-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 3px 0 2px;
+  justify-content: flex-end;
+}
+.msg-refs .mref {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9.5px;
+  color: var(--fg-mute);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 5px;
+  background: var(--bg-1);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-refs .mref.attach { color: var(--amber); border-color: rgba(251, 191, 36, 0.35); }
+.msg-refs .mref.memory { color: var(--violet); }
+.msg-refs .mref.skill { color: var(--blue); }
+.ctx-note {
+  font-size: 9.5px;
+  color: var(--fg-mute);
+  text-align: right;
+  margin-bottom: 2px;
+}
