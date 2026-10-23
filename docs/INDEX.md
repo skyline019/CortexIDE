@@ -2,7 +2,8 @@
 
 | 文档 | 内容 |
 | --- | --- |
-| [`../README.md`](../README.md) | 产品说明、能力长文、验证命令、目录结构 |
+| [`../README.md`](../README.md) | GitHub 首页（定位 / 下载 / 门禁）；附录为能力长文 |
+| [`RELEASE_NOTES_v0.6.4.md`](./RELEASE_NOTES_v0.6.4.md) | v0.6.4 发布说明（与 GitHub Release 对齐） |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | **当前**分层架构、状态机、预览边界、安全、ABI / term-host |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | 版本变更（0.6.4） |
 | [`../CONSTRAINTS.md`](../CONSTRAINTS.md) | **质量合同**（测试 / lint / 体量 / ABI / 发布门禁） |

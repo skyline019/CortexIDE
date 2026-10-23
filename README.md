@@ -1,101 +1,194 @@
-# Cortex · 带持久记忆的 Agent IDE
+# CortexIDE
 
-**版本 0.6.4** · React 19 + Vite + Electron · 本机优先的 Agent IDE。
+**本机优先的 Agent IDE · 持久向量记忆**  
+产品名 Cortex · 实现 **v0.6.4** · React 19 + Vite + Electron
 
-真实磁盘工作区 · 多会话单源 · 多标签终端 · OpenAI 兼容模型（含 DeepSeek）· 分区向量记忆（sqlite-vec ⇄ pgvector）· 文件监听与外部 diff · 白名单命令执行 · SSH 同步 · 文档预览（PDF / Word / Excel·SheetJS / PPT 文本）· 工作流与三模式 Agent。
+[![Release](https://img.shields.io/github/v/release/skyline019/CortexIDE?display_name=tag&sort=semver)](https://github.com/skyline019/CortexIDE/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
 
-| 文档 | 说明 |
-| --- | --- |
-| [`docs/INDEX.md`](./docs/INDEX.md) | 文档总索引 |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | **当前**架构（状态机 / 预览边界 / 安全） |
-| [`CONSTRAINTS.md`](./CONSTRAINTS.md) | 质量合同（硬门禁） |
-| [`CHANGELOG.md`](./CHANGELOG.md) | 0.6.4 变更 |
-| [`docs/SMOKE.md`](./docs/SMOKE.md) | 发布冒烟清单 |
-| [`docs/SCORE-0.6.4.md`](./docs/SCORE-0.6.4.md) | 七维复评（综合 ≈ 9.17） |
+CortexIDE 把**真实磁盘工作区**、**多会话 Agent**、**终端**与**分区向量记忆**收进同一桌面应用；模型走 OpenAI 兼容接口（含 DeepSeek）。面向个人本机使用，不是云端协作 IDE。
 
-### 0.6.4 要点
-
-- **门禁**：`npm test` **180** · `lint` **0** · `smoke:mock` 11/11 · `smoke:key` 9/9 · `smoke:exe` 8/8（全硬断言）
-- **原生 ABI**：开发默认 Node；桌面/打包切 Electron；`term-host` 隔离 `node-pty`（宿主崩不拖死 Vite）
-- **记忆**：`memory-store` 门面 + crud/migrate/ann/search；`recall` 统一 `sim`/`score`；`embed('auto')` neural 未就绪走 lexical
-- **Agent**：`agentTools` + `agentLoop`；Chat → `ChatSessionBar` + `ChatMessageList`
-- **会话**：`chatSessions` 唯一数据源；schema v4；Excel SheetJS / PPT 文本抽取 only
-- **安全**：`CORTEX_AUTH_*`；WS `/api/term`·`/api/watch` upgrade 鉴权；SSH 同步≠挂载
-
-下文各节保留能力细节与历史实测；若与上表冲突，**以 0.6.4 要点与 `docs/ARCHITECTURE.md` 为准**。
-
-### Windows 桌面版（EXE）
-
-```bash
-npm install
-npm run desktop          # 开发：Electron 窗口 + Vite
-npm run dist:dir         # 未打包目录：release/win-unpacked/Cortex.exe
-npm run dist:win         # 发版：NSIS 安装包 + Portable 便携包
-```
-
-数据在 `%APPDATA%\Cortex\`（`.env`、记忆库）；默认工作区为「文档\Cortex」。
-
-国内若 Electron 下载失败，可先设镜像：
-
-```bash
-set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
-set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
-```
-
-终端依赖使用 `@lydell/node-pty` 预编译包（npm 别名仍为 `node-pty`）。
+| | |
+|:---|:---|
+| **公开版本** | [v0.6.4](https://github.com/skyline019/CortexIDE/releases/tag/v0.6.4) |
+| **桌面产物** | `Cortex-0.6.4-Setup.exe`（安装包）· `Cortex-0.6.4-Portable.exe`（便携） |
+| **质量门禁** | `npm test` **180** · `lint` **0** · `smoke:mock` 11/11 · `smoke:key` 9/9 · `smoke:exe` 8/8（硬断言） |
+| **许可** | [MIT](LICENSE) |
 
 ![白名单命令执行闭环](./shots/e2e-10-exec-loop.png)
 
 ---
 
-## 快速开始
+## 目录
+
+1. [定位与适用范围](#1-定位与适用范围)
+2. [体系结构概要](#2-体系结构概要)
+3. [功能范围](#3-功能范围)
+4. [下载桌面版](#4-下载桌面版)
+5. [构建与快速开始](#5-构建与快速开始)
+6. [质量门禁](#6-质量门禁)
+7. [文档与导航](#7-文档与导航)
+8. [许可与协作](#8-许可与协作)
+
+---
+
+## 1. 定位与适用范围
+
+| | 说明 |
+|:---|:---|
+| **形态** | Windows 桌面（Electron）或本机浏览器（`npm run dev`） |
+| **工作区** | 真实本地目录；多标签编辑 · 文件监听 · 外部 diff |
+| **Agent** | Ask / Plan / Agent 三模式；工具读盘 / 写盘 / 白名单命令 |
+| **记忆** | 浏览器嵌入 + 服务端 KNN（sqlite-vec，可选 PGlite/pgvector） |
+| **非目标** | 云端多租户 IDE；SSH **透明挂载**；PPT **版式还原** |
+
+> **边界：** PPT 为文本抽取预览；SSH 为探活 / 列目录 / 读写 / 增量同步，**不做 sshfs 式挂载**。密钥仅存本机 `.env` 或 `%APPDATA%\Cortex\`，勿提交仓库。
+
+---
+
+## 2. 体系结构概要
+
+```text
+Electron / 浏览器
+ └── React UI          会话 · 编辑器 · 终端 · 预览 · Agent
+      └── Vite 中间件   server/*（无独立框架）
+           ├── fs / watch / exec / ssh / attach
+           ├── llm-proxy · prompts · skills · workflow
+           ├── memory-store（crud / search / ann / migrate）
+           └── term-host（独立进程加载 node-pty）
+```
+
+| 主题 | 要点 |
+|:---|:---|
+| **会话** | `chatSessions` 唯一数据源；`messages` 为活动会话投影（schema v4） |
+| **原生 ABI** | 开发默认 Node；桌面 / 打包切 Electron；错 ABI 探测在子进程 |
+| **终端** | `node-pty` 仅在 `server/term-host.mjs`；宿主崩不拖死 Vite |
+| **鉴权** | `CORTEX_AUTH_TOKEN(S)`；`/api/term` · `/api/watch` 的 WS upgrade 走 `checkAuth` |
+
+现行架构与安全约定：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · 质量合同：[CONSTRAINTS.md](CONSTRAINTS.md)
+
+---
+
+## 3. 功能范围
+
+| 类别 | 内容 |
+|:---|:---|
+| **编辑与预览** | CodeMirror 6；PDF / Word / Excel（SheetJS）/ PPT（文本）/ 媒体 |
+| **Agent** | SSE function calling · 本地规则引擎 · 工作流 / Plan |
+| **记忆** | 写入 / 检索 / 多用户隔离 · lexical 兜底 · ANN 粗筛（可选） |
+| **执行** | 命令白名单 · 沙箱降级（有 Docker 则容器） |
+| **远程** | SSH 同步与只读浏览（非挂载） |
+
+---
+
+## 4. 下载桌面版
+
+从 [Releases · v0.6.4](https://github.com/skyline019/CortexIDE/releases/tag/v0.6.4) 下载：
+
+| 文件 | 用途 |
+|:---|:---|
+| **Cortex-0.6.4-Setup.exe** | NSIS 安装包（可选目录、快捷方式） |
+| **Cortex-0.6.4-Portable.exe** | 便携版（免安装） |
+
+安装后数据目录：`%APPDATA%\Cortex\`（`.env`、记忆库）。默认工作区为「文档\Cortex」。
+
+自行打包：
 
 ```bash
-cd cortex-ide
 npm install
-npm run desktop        # 推荐：Electron（欢迎页选工作区 + API Key）
-# 或仅浏览器：
-npm run dev            # http://127.0.0.1:<port>
+npm run dist:win     # → release/Cortex-*-Setup.exe + Portable.exe
+npm run dist:dir     # → release/win-unpacked/Cortex.exe
 ```
 
-1. 欢迎页填写 API Key（或设置里改模型 / Base URL），选择本机文件夹进入。
-2. 顶栏应显示模型与记忆后端状态；侧栏为真实目录树；底部为终端。
-3. 快捷键：`Ctrl+O` 欢迎页 · `Ctrl+1…9` 最近工作区 · `Ctrl+K` 命令面板 · `Ctrl+J` Agent · `Ctrl+B` 侧栏。
-4. 也可用环境变量指定初始工作区：
+国内若 Electron 下载失败：
+
+```bat
+set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
+set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
+```
+
+---
+
+## 5. 构建与快速开始
+
+**依赖：** Node.js ≥ 20、npm（桌面版另需本机可构建的 Electron 原生模块）
 
 ```bash
-CORTEX_WORKSPACE=/path/to/your/project npm run dev
+git clone git@github.com:skyline019/CortexIDE.git
+cd CortexIDE
+npm install
+npm run desktop      # Electron：欢迎页选工作区 + API Key
+# 或
+npm run dev          # 浏览器 http://127.0.0.1:<port>
 ```
 
-`.env`：
+| 步骤 | 说明 |
+|:---|:---|
+| 1 | 欢迎页填 API Key（或设置中改模型 / Base URL），选择本机文件夹 |
+| 2 | 顶栏应显示模型与记忆后端；侧栏为真实目录树；底部为终端 |
+| 3 | `Ctrl+O` 欢迎页 · `Ctrl+1…9` 最近工作区 · `Ctrl+K` 命令面板 · `Ctrl+J` Agent |
+
+最小 `.env`（完整模板见 [`.env.example`](.env.example)）：
 
 ```ini
 DEEPSEEK_API_KEY=sk-...
 LLM_BASE_URL=https://api.deepseek.com/v1
 LLM_PROVIDER=deepseek
 LLM_ALLOW_OVERRIDE=1
-# 可选
-CORTEX_DB=.cortex/memory.db   # sqlite-vec 数据库位置
-EMBED_DIM=512                 # 向量维度，需与嵌入模型一致
-
-CORTEX_MEMORY_BACKEND=sqlite  # sqlite（默认，分区 vec0）| pg（PGlite + pgvector）
-CORTEX_PG_DIR=.cortex/pgdata  # pg 后端的数据目录（PGlite 嵌入式 PG）
-# PG_URL=postgres://user:pass@host:5432/cortex   # 接了真 Postgres 就填这个（需 npm i pg）
-
-CORTEX_WATCH_MODE=auto        # auto（<=2000 文件用 fs.watch）| poll（网络盘 / 超大仓）
-CORTEX_WATCH_INTERVAL=800     # poll 模式的轮询间隔（ms）
-CORTEX_WATCH_DEPTH=8          # 监听深度
-
-CORTEX_ANN_MIN=20000          # 超过这么多条才建二值量化 ANN 索引（小库直接精确 KNN）
-CORTEX_ANN_CAND=256           # ANN 候选数（64~1024，越大越准越慢）
-CORTEX_HOT_MAX=2000           # 每用户热点表容量
-CORTEX_HOT_SKIP=0.22          # 热点短路距离阈值
-# CORTEX_SANDBOX_DIR=/tmp/cortex-sandbox   # 沙箱副本目录（默认 $TMPDIR/cortex-sandbox）
-# CORTEX_SANDBOX_IMAGE=node:20-alpine      # 有 docker 时用的容器镜像
-# CORTEX_DOCKER_BIN=docker                 # docker 可执行文件路径
 ```
 
-完整的可复制版本见 `.env.example`。
+```bash
+CORTEX_WORKSPACE=/path/to/your/project npm run dev
+```
+
+终端依赖使用 `@lydell/node-pty` 预编译包（npm 别名仍为 `node-pty`）。
+
+---
+
+## 6. 质量门禁
+
+| 命令 | 作用 |
+|:---|:---|
+| `npm test` | 180 项 `node:test`（不联网） |
+| `npm run lint` | oxlint，门禁 **0** warning |
+| `npm run smoke:mock` | 无 Key 浏览器冒烟（需 `npm run dev`） |
+| `npm run smoke:key` | 真 Key Agent 冒烟（**禁止**写入假 Key 覆盖服务端） |
+| `npm run smoke:exe` | 已打包 `Cortex.exe` 冷启动 |
+
+七维复评证据：[docs/SCORE-0.6.4.md](docs/SCORE-0.6.4.md)（综合 ≈ **9.17**）· 清单：[docs/SMOKE.md](docs/SMOKE.md)
+
+---
+
+## 7. 文档与导航
+
+| 文档 | 内容 |
+|:---|:---|
+| [docs/INDEX.md](docs/INDEX.md) | 文档总索引 |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 分层架构 · 预览边界 · ABI / term-host |
+| [CONSTRAINTS.md](CONSTRAINTS.md) | 质量合同（硬门禁） |
+| [CHANGELOG.md](CHANGELOG.md) | 版本变更 |
+| [docs/SCORE-0.6.4.md](docs/SCORE-0.6.4.md) | 冲 9+ 七维评估 |
+| [docs/SMOKE.md](docs/SMOKE.md) | 发布冒烟清单 |
+| [docs/review-latest.md](docs/review-latest.md) | 审查快照（勿按旧稿返工） |
+| [docs/manifest.md](docs/manifest.md) | 源码清单（`npm run manifest`） |
+
+---
+
+## 8. 许可与协作
+
+以 [MIT License](LICENSE) 发布。
+
+| | |
+|:---|:---|
+| Issues | https://github.com/skyline019/CortexIDE/issues |
+| Releases | https://github.com/skyline019/CortexIDE/releases |
+
+---
+
+## 附录 · 能力细节与历史实测
+
+> 以下为能力长文与历史实测数字；**产品口径与门禁以第 1–8 节为准**。若冲突，以 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 与 [CONSTRAINTS.md](CONSTRAINTS.md) 为准。
 
 ---
 
