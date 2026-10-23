@@ -1,0 +1,187 @@
+# Strict CI — every gate must pass; no continue-on-error.
+# Mirrors FCS-style gate chain for the Node/Electron stack.
+name: Strict CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  CORTEX_NO_PTY: '1'
+
+jobs:
+  lint:
+    name: Lint (−Werror)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install (ignore scripts until native ready)
+        run: npm ci --ignore-scripts
+
+      - name: Lint (oxlint --deny-warnings)
+        run: npm run lint
+
+  hygiene:
+    name: Hygiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install (ignore scripts)
+        run: npm ci --ignore-scripts
+
+      - name: ci-hygiene
+        run: node scripts/ci-hygiene.mjs
+
+  test:
+    name: Full npm test
+    needs: [lint, hygiene]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: System build tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 make g++ build-essential
+
+      - name: npm ci + Node ABI
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm rebuild better-sqlite3 node-pty
+          node scripts/ensure-native-abi.mjs --target=node --strict
+
+      - name: npm test
+        run: |
+          set -euo pipefail
+          npm test
+
+  build:
+    name: Vite production build
+    needs: [lint, hygiene]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: System build tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 make g++ build-essential
+
+      - name: npm ci + Node ABI
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm rebuild better-sqlite3 node-pty
+          node scripts/ensure-native-abi.mjs --target=node --quiet
+
+      - name: npm run build
+        run: |
+          set -euo pipefail
+          npm run build
+          test -f dist/index.html
+
+  smoke:
+    name: Smoke mock (Playwright)
+    needs: [test, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: System build tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3 make g++ build-essential
+
+      - name: npm ci + Node ABI
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm rebuild better-sqlite3 node-pty
+          node scripts/ensure-native-abi.mjs --target=node --quiet
+
+      - name: Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start Vite dev (API middleware) + smoke:mock
+        run: |
+          set -euo pipefail
+          # 必须用 vite dev：中间件只挂在 configureServer，preview 无 /api
+          CORTEX_NO_PTY=1 npx vite --host 127.0.0.1 --port 5173 &
+          echo $! > /tmp/cortex-vite.pid
+          for i in $(seq 1 90); do
+            if curl -sf "http://127.0.0.1:5173/" >/dev/null; then
+              echo "vite up"
+              break
+            fi
+            sleep 1
+          done
+          curl -sf "http://127.0.0.1:5173/" >/dev/null
+          CORTEX_URL=http://127.0.0.1:5173/ npm run smoke:mock
+          kill "$(cat /tmp/cortex-vite.pid)" || true
+
+  ci-ok:
+    name: Strict CI OK
+    if: always()
+    needs: [lint, hygiene, test, build, smoke]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require all gates success
+        run: |
+          set -euo pipefail
+          echo "lint=${{ needs.lint.result }}"
+          echo "hygiene=${{ needs.hygiene.result }}"
+          echo "test=${{ needs.test.result }}"
+          echo "build=${{ needs.build.result }}"
+          echo "smoke=${{ needs.smoke.result }}"
+          test "${{ needs.lint.result }}" = "success"
+          test "${{ needs.hygiene.result }}" = "success"
+          test "${{ needs.test.result }}" = "success"
+          test "${{ needs.build.result }}" = "success"
+          test "${{ needs.smoke.result }}" = "success"

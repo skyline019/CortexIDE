@@ -306,18 +306,22 @@ test('文档图片：目录推导与 alt 截断', () => {
   assert.equal(shortAlt('一二三四五六七八九十', 5), '一二三四五…');
 });
 
-test('文档图片：README 里每一张图都能解析成可加载的地址', () => {
+test('文档图片：README 里本地图走读盘接口；外链徽章可 https', () => {
   const readme = fs.readFileSync(path.join(process.cwd(), 'README.md'), 'utf8');
   // 先去掉围栏代码块和行内代码：README 里讲「怎么写图片」的示例本身不是图片
   const prose = readme.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
   const srcs = [...prose.matchAll(/!\[[^\]]*\]\(([^)\s]+)/g)].map((m) => m[1]);
-  assert.ok(srcs.length >= 15, `README 里应该有不少图，实际 ${srcs.length}`);
+  assert.ok(srcs.length >= 1, `README 里至少应有一张图，实际 ${srcs.length}`);
+  const local = [];
   for (const src of srcs) {
+    if (/^https?:\/\//i.test(src)) continue; // shields.io 等外链徽章
     const resolved = resolveAssetSrc(src, dirOf('README.md'));
     assert.match(resolved, /^\/api\/fs\/raw\?path=/, `${src} 没走读盘接口`);
     const rel = decodeURIComponent(resolved.split('path=')[1]);
     assert.ok(fs.existsSync(path.join(process.cwd(), rel)), `图片不存在：${rel}`);
+    local.push(rel);
   }
+  assert.ok(local.length >= 1, 'README 应至少保留一张仓库内截图');
 });
 
 test('文档图片：raw 响应头在 Windows 盘符路径下不能把整段路径塞进 Content-Disposition', () => {

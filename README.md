@@ -3,6 +3,7 @@
 **本机优先的 Agent IDE · 持久向量记忆**  
 产品名 Cortex · 实现 **v0.6.4** · React 19 + Vite + Electron
 
+[![Strict CI](https://github.com/skyline019/CortexIDE/actions/workflows/ci.yml/badge.svg)](https://github.com/skyline019/CortexIDE/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/skyline019/CortexIDE?display_name=tag&sort=semver)](https://github.com/skyline019/CortexIDE/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)](package.json)
@@ -13,7 +14,8 @@ CortexIDE 把**真实磁盘工作区**、**多会话 Agent**、**终端**与**�
 |:---|:---|
 | **公开版本** | [v0.6.4](https://github.com/skyline019/CortexIDE/releases/tag/v0.6.4) |
 | **桌面产物** | `Cortex-0.6.4-Setup.exe`（安装包）· `Cortex-0.6.4-Portable.exe`（便携） |
-| **质量门禁** | `npm test` **180** · `lint` **0** · `smoke:mock` 11/11 · `smoke:key` 9/9 · `smoke:exe` 8/8（硬断言） |
+| **质量门禁** | [Strict CI](https://github.com/skyline019/CortexIDE/actions)：Lint → Hygiene → Test → Build → Smoke mock → **OK** |
+| **本机发布门** | `npm test` **180** · `lint` **0** · `smoke:mock` / `smoke:key` / `smoke:exe`（硬断言） |
 | **许可** | [MIT](LICENSE) |
 
 ![白名单命令执行闭环](./shots/e2e-10-exec-loop.png)
@@ -148,13 +150,17 @@ CORTEX_WORKSPACE=/path/to/your/project npm run dev
 
 ## 6. 质量门禁
 
+**Strict CI**（push / PR → `main`）：Lint（`--deny-warnings`）→ Hygiene → Full test → Vite build → `smoke:mock` → **Strict CI OK**。无 `continue-on-error`。
+
 | 命令 | 作用 |
 |:---|:---|
+| `npm run lint` | oxlint `--deny-warnings` |
+| `npm run ci:hygiene` | 备份 / 密钥跟踪 / 测试清单与下限 |
 | `npm test` | 180 项 `node:test`（不联网） |
-| `npm run lint` | oxlint，门禁 **0** warning |
-| `npm run smoke:mock` | 无 Key 浏览器冒烟（需 `npm run dev`） |
-| `npm run smoke:key` | 真 Key Agent 冒烟（**禁止**写入假 Key 覆盖服务端） |
-| `npm run smoke:exe` | 已打包 `Cortex.exe` 冷启动 |
+| `npm run build` | Vite production build |
+| `npm run smoke:mock` | 无 Key 浏览器冒烟（需 `npm run dev`；CI 已自动化） |
+| `npm run smoke:key` | 真 Key Agent 冒烟（发布机；**禁止**假 Key） |
+| `npm run smoke:exe` | 已打包 `Cortex.exe` 冷启动（发布机） |
 
 七维复评证据：[docs/SCORE-0.6.4.md](docs/SCORE-0.6.4.md)（综合 ≈ **9.17**）· 清单：[docs/SMOKE.md](docs/SMOKE.md)
 

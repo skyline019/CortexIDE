@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "node scripts/ensure-native-abi.mjs --target=node --quiet && vite",
     "build": "vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
+    "ci:hygiene": "node scripts/ci-hygiene.mjs",
     "preview": "vite preview",
     "desktop": "electron .",
     "desktop:dev": "electron .",

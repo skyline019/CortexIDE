@@ -28,6 +28,10 @@
 
 - `README` / `CONSTRAINTS` / `SMOKE` / `ARCHITECTURE` / `INDEX` / `SCORE-0.6.4` / `review-latest` 对齐 0.6.4
 
+### CI
+
+- GitHub Actions **Strict CI**：Lint（`--deny-warnings`）→ Hygiene → Test → Build → `smoke:mock` → Strict CI OK
+
 ## 0.6.3 — 2026-10-22
 
 ### Store

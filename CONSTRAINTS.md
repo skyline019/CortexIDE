@@ -12,8 +12,9 @@
 
 ## Lint
 
-- `npm run lint`（oxlint）：**0 error**，**0 warning**（已达标）。
+- `npm run lint`（oxlint `--deny-warnings`）：**0 error**，**0 warning**（已达标；CI 等价 `-Werror`）。
 - 禁止为过门而批量加 `eslint-disable` / oxlint ignore；允许在 `.oxlintrc.json` 关闭与本仓库架构冲突的噪声规则（如 `only-export-components`、`set-state-in-effect`）。
+- **Strict CI**（`.github/workflows/ci.yml`）：Lint → Hygiene → Test → Build → Smoke mock → **Strict CI OK**；任一门失败整链失败。
 
 ## 模块体量
 
@@ -48,4 +49,5 @@ npm run smoke:exe    # 打包 exe 冷启动
 
 ## 产品边界（不稀释冲分）
 
-本阶段**不做**：SSH 透明挂载、hnswlib 强制接线、PPT 版式还原、公式重算、全量 TS 迁移、GitHub Actions。
+本阶段**不做**：SSH 透明挂载、hnswlib 强制接线、PPT 版式还原、公式重算、全量 TS 迁移。  
+CI 中的 `smoke:key` / `smoke:exe` 仍为发布机本机门禁（需密钥 / Windows 产物），不强制进 Linux Strict CI。

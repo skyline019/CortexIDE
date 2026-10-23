@@ -22,7 +22,8 @@
 | 命令 | 用途 |
 | --- | --- |
 | `npm run dev` | Vite 开发（先确保 Node ABI） |
-| `npm test` / `npm run lint` | 单测 + oxlint |
+| `npm test` / `npm run lint` / `ci:hygiene` | 单测 + oxlint（deny-warnings）+ 卫生门 |
+| GitHub Actions Strict CI | Lint → Hygiene → Test → Build → smoke:mock → OK |
 | `npm run desktop` | Electron 开发窗（先切 Electron ABI） |
 | `npm run dist:dir` / `dist:win` | 打包；结束后切回 Node ABI |
 | `npm run smoke:mock` | 无 Key 浏览器冒烟 |
