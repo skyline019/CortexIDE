@@ -1,6 +1,6 @@
 # Cortex 冒烟清单（发布前）
 
-版本：**0.6.4** · 质量合同见根目录 [`CONSTRAINTS.md`](../CONSTRAINTS.md) · 七维复评见 [`SCORE-0.6.4.md`](./SCORE-0.6.4.md)。  
+版本：**0.6.4** · 质量合同见根目录 [`CONSTRAINTS.md`](../CONSTRAINTS.md)。  
 在 `npm run dist:dir` 或 `npm run desktop` 后按序勾选。
 
 ## 自动化门禁

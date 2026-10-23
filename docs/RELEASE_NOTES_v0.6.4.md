@@ -23,7 +23,6 @@
 
 - `npm test` **180** · `npm run lint` **0**
 - Playwright 硬门禁：`smoke:mock` **11/11** · `smoke:key` **9/9** · `smoke:exe` **8/8**
-- 七维复评综合 ≈ **9.17**（可靠性 9.6 / 可交付 9.4）— 见 [`SCORE-0.6.4.md`](./SCORE-0.6.4.md)
 
 ### Stability & native
 

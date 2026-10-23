@@ -5,4 +5,3 @@
 - 记忆链路：bge-small-zh-v1.5（Web Worker）→ sqlite-vec KNN；lexical / fuseRrf 兜底
 - 启动：`npm install && npm run desktop`（或 `npm run dev`）；工作区可用 `CORTEX_WORKSPACE`
 - 校验：`npm test`（180）· `lint`（0）· `smoke:mock` / `smoke:key` / `smoke:exe`
-- 复评：[`SCORE-0.6.4.md`](./SCORE-0.6.4.md) 综合 ≈ 9.17

@@ -7,7 +7,7 @@
 - 新增根目录 `CONSTRAINTS.md`；`npm test` **180**、`npm run lint` **0 warning**
 - 单测：chatSessions / opsHelpers / memory-store / recall / term-host / agent 工具环 / 鉴权与 exec 负向
 - Playwright：`smoke:mock`（11/11）· `smoke:key`（9/9）· `smoke:exe`（8/8）入发布门禁；**全部硬断言**
-- 七维复评综合 ≈ **9.17**（可靠性 9.6 / 可交付 9.4）— 见 `docs/SCORE-0.6.4.md`
+- 质量复评（作者自用，不进仓库）
 
 ### 架构拆分
 
@@ -26,7 +26,7 @@
 
 ### 文档
 
-- `README` / `CONSTRAINTS` / `SMOKE` / `ARCHITECTURE` / `INDEX` / `SCORE-0.6.4` / `review-latest` 对齐 0.6.4
+- `README` / `CONSTRAINTS` / `SMOKE` / `ARCHITECTURE` / `INDEX` / `review-latest` 对齐 0.6.4
 
 ### CI
 

@@ -162,7 +162,7 @@ CORTEX_WORKSPACE=/path/to/your/project npm run dev
 | `npm run smoke:key` | 真 Key Agent 冒烟（发布机；**禁止**假 Key） |
 | `npm run smoke:exe` | 已打包 `Cortex.exe` 冷启动（发布机） |
 
-七维复评证据：[docs/SCORE-0.6.4.md](docs/SCORE-0.6.4.md)（综合 ≈ **9.24**）· 清单：[docs/SMOKE.md](docs/SMOKE.md)
+清单：[docs/SMOKE.md](docs/SMOKE.md) · 质量合同：[CONSTRAINTS.md](CONSTRAINTS.md)
 
 ---
 
@@ -174,7 +174,6 @@ CORTEX_WORKSPACE=/path/to/your/project npm run dev
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 分层架构 · 预览边界 · ABI / term-host |
 | [CONSTRAINTS.md](CONSTRAINTS.md) | 质量合同（硬门禁） |
 | [CHANGELOG.md](CHANGELOG.md) | 版本变更 |
-| [docs/SCORE-0.6.4.md](docs/SCORE-0.6.4.md) | 冲 9+ 七维评估 |
 | [docs/SMOKE.md](docs/SMOKE.md) | 发布冒烟清单 |
 | [docs/review-latest.md](docs/review-latest.md) | 审查快照（勿按旧稿返工） |
 | [docs/manifest.md](docs/manifest.md) | 源码清单（`npm run manifest`） |
@@ -1285,7 +1284,6 @@ cortex-ide/
 ├─ docs/
 │  ├─ INDEX.md              # 文档总索引
 │  ├─ ARCHITECTURE.md       # 当前架构（0.6.4）
-│  ├─ SCORE-0.6.4.md        # 七维复评 ≈9.24
 │  ├─ review-latest.md      # 审查快照（勿返工旧稿）
 │  ├─ SMOKE.md              # 发布冒烟清单
 │  ├─ manifest.md           # 源码清单（npm run manifest）

@@ -15,5 +15,5 @@
 - 可选：`smoke` 全量 · `e2e` / `e2e:report` · `bench*` · `manifest`
 
 ## 质量
-- 合同：[`CONSTRAINTS.md`](../CONSTRAINTS.md) · 复评：[`SCORE-0.6.4.md`](./SCORE-0.6.4.md)（综合 ≈ 9.17）
-- 架构：[`ARCHITECTURE.md`](./ARCHITECTURE.md) · 审查：[`review-latest.md`](./review-latest.md)
+- 合同：[`CONSTRAINTS.md`](../CONSTRAINTS.md) · 架构：[`ARCHITECTURE.md`](./ARCHITECTURE.md)
+- 审查：[`review-latest.md`](./review-latest.md)

@@ -7,7 +7,6 @@
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | **当前**分层架构、状态机、预览边界、安全、ABI / term-host |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | 版本变更（0.6.4） |
 | [`../CONSTRAINTS.md`](../CONSTRAINTS.md) | **质量合同**（测试 / lint / 体量 / ABI / 发布门禁） |
-| [`SCORE-0.6.4.md`](./SCORE-0.6.4.md) | 冲 9+ 七维全量评估（最新综合 ≈ **9.24**） |
 | [`SMOKE.md`](./SMOKE.md) | 发布前冒烟清单（mock / key / exe 自动化） |
 | [`manifest.md`](./manifest.md) | 源码清单 / 行数 / sha256（`npm run manifest`） |
 | [`e2e-ladder.md`](./e2e-ladder.md) | 真机阶梯测试报告（`npm run e2e` 生成） |

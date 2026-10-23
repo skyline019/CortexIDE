@@ -37,3 +37,7 @@ public/pdfjs/
 
 # 本地拆分前备份（可按需提交；默认忽略避免污染 diff）
 src/**/_backup/
+
+# 自用评估 / 打分文档（不上仓库）
+docs/SCORE-*.md
+.local/

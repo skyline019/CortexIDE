@@ -15,7 +15,7 @@
 | Node / Electron 原生 ABI | **已根治**：`ensure-native-abi` + `term-host` 隔离 |
 | SSH 远程 | **产品边界：只同步 / 只读浏览，不做透明挂载** |
 | hnswlib | **可选升级**：`CORTEX_ANN_ENGINE=hnsw` 门面已留；未接线时回退 BitIndex |
-| 冲 9+ | **达标**：综合 ≈ 9.17（见 `SCORE-0.6.4.md`） |
+| 质量门禁 | **Strict CI** + 本机 smoke（评估文档作者自用，不进仓库） |
 
 当前定位：本地优先 Agent IDE（**v0.6.4**），`npm test` **180/180** 应全绿。
 

@@ -1,7 +1,7 @@
 # Cortex 架构（0.6.4）
 
 本文描述**当前**代码结构，与历史 README 长文互补。变更说明见根目录 [`CHANGELOG.md`](../CHANGELOG.md)。  
-质量合同：[`CONSTRAINTS.md`](../CONSTRAINTS.md) · 冒烟：[`SMOKE.md`](./SMOKE.md) · 复评：[`SCORE-0.6.4.md`](./SCORE-0.6.4.md)。
+质量合同：[`CONSTRAINTS.md`](../CONSTRAINTS.md) · 冒烟：[`SMOKE.md`](./SMOKE.md)。
 
 ## 总览
 
