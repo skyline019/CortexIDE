@@ -71,3 +71,15 @@ test('checkCommand：白名单之外的一律拒绝', () => {
   assert.equal(r.ok, false);
   assert.match(r.reason, /白名单/);
 });
+
+test('负向：危险删除模式 DENY', () => {
+  const root = process.cwd();
+  assert.equal(checkCommand('rm -rf /', root).ok, false);
+  assert.equal(checkCommand('del /s /q C:\\Windows', root).ok, false);
+});
+
+test('负向：管道与命令替换在引号外拒绝', () => {
+  const root = process.cwd();
+  assert.equal(checkCommand('echo hi | cat', root).ok, false);
+  assert.equal(checkCommand('echo $(whoami)', root).ok, false);
+});

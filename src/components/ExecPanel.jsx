@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../state/store.jsx';
 import { useToast } from '../state/toast.jsx';
-import { IconPlay, IconStop, IconTrash } from './Icons.jsx';
+import { IconPlay, IconStop } from './Icons.jsx';
 
 /** 迷你耗时趋势图（近 N 次执行的毫秒数） */
 function Sparkline({ data = [], width = 220, height = 34 }) {
@@ -25,7 +25,7 @@ export default function ExecPanel() {
   const toast = useToast();
   const [presets, setPresets] = useState([]);
   const [sandbox, setSandbox] = useState(false);
-  const [sbMode, setSbMode] = useState(null); // 服务端探测：有 docker 就用真容器
+  const [sbMode] = useState(null); // 服务端探测：有 docker 就用真容器（只读展示）
   const [busy, setBusy] = useState(null);
   const [stats, setStats] = useState(null);
 

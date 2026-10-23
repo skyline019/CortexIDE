@@ -131,7 +131,7 @@ export function tokenize(cmd) {
 }
 
 /** 去掉 ANSI 颜色序列，输出给模型/界面时更干净（原始终端另有 pty 通道） */
-const ANSI = /[\u001B\u009B][[\]()#;?]*(?:(?:(?:[a-zA-Z\d]*(?:;[-a-zA-Z\d\/#&.:=?%@~_]+)*)?\u0007)|(?:(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PR-TZcf-nq-uy=><~]))/g;
+const ANSI = /[\u001B\u009B][[\]()#;?]*(?:(?:(?:[a-zA-Z\d]*(?:;[-a-zA-Z\d/#&.:=?%@~_]+)*)?\u0007)|(?:(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PR-TZcf-nq-uy=><~]))/g;
 const stripAnsi = (s) => String(s || '').replace(ANSI, '');
 
 let allowlist = null;

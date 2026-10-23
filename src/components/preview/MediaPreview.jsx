@@ -93,7 +93,8 @@ function useMediaPlayback(filePath) {
     rafRef.current = 0;
   };
 
-  const tick = useCallback(() => {
+  const tickRef = useRef(() => {});
+  tickRef.current = () => {
     const el = ref.current;
     if (!el) return;
     let buf = 0;
@@ -105,13 +106,13 @@ function useMediaPlayback(filePath) {
       /* 某些格式 buffered 访问会抛 */
     }
     setState((s) => ({ ...s, currentTime: el.currentTime, buffered: buf, playing: !el.paused && !el.ended }));
-    if (!el.paused && !el.ended) rafRef.current = requestAnimationFrame(tick);
-  }, []);
+    if (!el.paused && !el.ended) rafRef.current = requestAnimationFrame(() => tickRef.current());
+  };
 
   const startRaf = useCallback(() => {
     stopRaf();
-    rafRef.current = requestAnimationFrame(tick);
-  }, [tick]);
+    rafRef.current = requestAnimationFrame(() => tickRef.current());
+  }, []);
 
   // 换文件时把所有状态清干净，否则上一个文件的时长会残留
   useEffect(() => {

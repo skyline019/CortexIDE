@@ -1,13 +1,13 @@
 {
   "name": "cortex-ide",
   "private": true,
-  "version": "0.6.3",
+  "version": "0.6.4",
   "type": "module",
   "main": "desktop/main.mjs",
   "author": "Cortex",
-  "description": "带持久记忆的 Agent IDE — React 19 + Vite + CodeMirror 6",
+  "description": "带持久记忆的 Agent IDE �?React 19 + Vite + CodeMirror 6",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/ensure-native-abi.mjs --target=node --quiet && vite",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -16,9 +16,9 @@
     "icons:sync": "node scripts/sync-icons.mjs",
     "pdfjs:sync": "node scripts/sync-pdfjs-assets.mjs",
     "prebuild": "node scripts/sync-pdfjs-assets.mjs",
-    "dist:win": "npm run icons:sync && npm run pdfjs:sync && npm run build && electron-builder --win nsis portable --x64",
-    "dist:dir": "npm run icons:sync && npm run pdfjs:sync && npm run build && electron-builder --win dir --x64",
-    "rebuild:native": "electron-builder install-app-deps",
+    "dist:win": "node scripts/ensure-native-abi.mjs --target=electron && npm run icons:sync && npm run pdfjs:sync && npm run build && electron-builder --win nsis portable --x64 && node scripts/ensure-native-abi.mjs --target=node --quiet",
+    "dist:dir": "node scripts/ensure-native-abi.mjs --target=electron && npm run icons:sync && npm run pdfjs:sync && npm run build && electron-builder --win dir --x64 && node scripts/ensure-native-abi.mjs --target=node --quiet",
+    "rebuild:native": "node scripts/ensure-native-abi.mjs --target=electron --force",
     "postinstall": "node scripts/desktop-postinstall.mjs",
     "smoke": "node scripts/smoke.mjs",
     "smoke:mock": "node scripts/smoke-mock.mjs",
@@ -31,10 +31,14 @@
     "manifest": "node scripts/manifest.mjs",
     "bench:compress": "node scripts/bench-compress.mjs balanced",
     "bench:tokenizer": "node scripts/bench-tokenizer.mjs",
-    "test": "node --test scripts/test-compress.test.mjs scripts/test-exec.test.mjs scripts/test-preview.test.mjs scripts/test-workflow.test.mjs scripts/test-refs.test.mjs scripts/test-media.test.mjs scripts/test-ann.test.mjs scripts/test-auth.test.mjs scripts/test-office.test.mjs scripts/test-pdf-text.test.mjs scripts/test-docx-mammoth.test.mjs",
+    "test": "node scripts/ensure-native-abi.mjs --target=node --quiet && node --test scripts/test-compress.test.mjs scripts/test-exec.test.mjs scripts/test-preview.test.mjs scripts/test-workflow.test.mjs scripts/test-refs.test.mjs scripts/test-media.test.mjs scripts/test-ann.test.mjs scripts/test-auth.test.mjs scripts/test-office.test.mjs scripts/test-pdf-text.test.mjs scripts/test-docx-mammoth.test.mjs scripts/test-chat-session.test.mjs scripts/test-ops.test.mjs scripts/test-memory-store.test.mjs scripts/test-agent-loop.test.mjs scripts/test-recall.test.mjs scripts/test-term-host.test.mjs",
     "test:all": "npm test && npm run bench:compress",
     "e2e": "bash scripts/e2e.sh",
-    "e2e:report": "node scripts/e2e-report.mjs"
+    "e2e:report": "node scripts/e2e-report.mjs",
+    "rebuild:node": "node scripts/ensure-native-abi.mjs --target=node --force",
+    "predesktop": "node scripts/ensure-native-abi.mjs --target=electron",
+    "smoke:key": "node scripts/smoke-key.mjs",
+    "smoke:exe": "node scripts/smoke-exe.mjs"
   },
   "dependencies": {
     "@codemirror/lang-css": "^6.3.1",
@@ -70,6 +74,7 @@
     "@types/react-dom": "^19.3.0",
     "electron": "^37.10.3",
     "electron-builder": "^26.0.12",
-    "oxlint": "^1.88.0"
+    "oxlint": "^1.88.0",
+    "playwright": "^1.55.0"
   }
 }

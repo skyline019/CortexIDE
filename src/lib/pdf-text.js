@@ -40,7 +40,7 @@ function gapKind(prev, next, gap) {
   if (/\s$/.test(prev.str) || /^\s/.test(next.str)) return false;
   // 标点贴字
   if (/^[),.;:!?\u3001\u3002\uff0c\uff01\uff1f\uff1b\uff1a\u201d\u2019\]]/.test(b)) return false;
-  if (/[(\[{\u201c\u2018\uff08]$/.test(a)) return false;
+  if (/[([{\u201c\u2018\uff08]$/.test(a)) return false;
 
   if (gap > fs * 2.0) return '\t';
   if (gap > fs * 0.22) return ' ';

@@ -20,7 +20,7 @@ import {
   getBackendState,
 } from '../lib/memoryBackend.js';
 import { loadChatStoreForWorkspace, saveChatStoreToWorkspace, makeSession } from '../lib/chatSession.js';
-import { sealChatForPersist } from './reducers/chat.js';
+import { isRealConnected, searchInMemoryFiles, buildChatPersistPayload, normalizeWritePath } from './opsHelpers.js';
 
 /**
  * @param {{
@@ -46,7 +46,7 @@ export function createOps(ctx) {
 
   return {
       /** 当前是否接在真实目录上 */
-      isReal: () => stateRef.current.workspace.mode === 'real' && stateRef.current.workspace.connected,
+      isReal: () => isRealConnected(stateRef.current.workspace),
 
       /** 真实模式：读取磁盘文件 */
       async readFile(path) {
@@ -76,6 +76,9 @@ export function createOps(ctx) {
 
       /** 写入文件：真实模式落盘，否则写内存 */
       async writeFile(path, content, id) {
+        const norm = normalizeWritePath(path);
+        if (!norm.ok) throw new Error(norm.error);
+        path = norm.path;
         const cur = stateRef.current;
         const existing = cur.files.find((f) => f.id === id) || cur.files.find((f) => f.path === path) || null;
         const real = this.isReal();
@@ -172,14 +175,7 @@ export function createOps(ctx) {
           const res = await fsClient.search(query, 30);
           return { hits: res.hits, total: res.total };
         }
-        const q = String(query || '').toLowerCase();
-        const hits = [];
-        for (const f of stateRef.current.files) {
-          f.content.split('\n').forEach((line, i) => {
-            if (line.toLowerCase().includes(q)) hits.push({ path: f.path, line: i + 1, text: line.trim().slice(0, 160) });
-          });
-        }
-        return { hits: hits.slice(0, 30), total: hits.length };
+        return searchInMemoryFiles(stateRef.current.files, query, 30);
       },
 
       /** 真实模式：重新拉取目录树 */
@@ -373,13 +369,7 @@ export function createOps(ctx) {
         const prevRoot = stateRef.current.workspace?.root || '';
         // 切换工作区前先落盘当前多会话
         if (prevRoot) {
-          const sealed = sealChatForPersist(stateRef.current);
-          await saveChatStoreToWorkspace(prevRoot, {
-            version: 2,
-            root: prevRoot,
-            activeSessionId: sealed.activeSessionId,
-            sessions: sealed.chatSessions,
-          }).catch(() => {});
+          await saveChatStoreToWorkspace(prevRoot, buildChatPersistPayload(stateRef.current, prevRoot)).catch(() => {});
         }
         let target = info;
         if (root && root !== info.root) {

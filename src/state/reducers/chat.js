@@ -231,3 +231,27 @@ export function sealChatForPersist(state) {
     messages: cleaned,
   };
 }
+
+/** 启动时把旧双轨（仅 messages / 空 sessions）收敛为单一会话源 */
+export function coerceChatSource(state) {
+  let sessions = Array.isArray(state.chatSessions) ? state.chatSessions : [];
+  if (!sessions.length && Array.isArray(state.messages) && state.messages.length) {
+    const s = makeSession({ messages: state.messages });
+    return { ...state, chatSessions: [s], activeSessionId: s.id, messages: s.messages };
+  }
+  if (!sessions.length) {
+    const s = makeSession();
+    return { ...state, chatSessions: [s], activeSessionId: s.id, messages: [] };
+  }
+  const activeId =
+    state.activeSessionId && sessions.some((x) => x.id === state.activeSessionId)
+      ? state.activeSessionId
+      : sessions[sessions.length - 1].id;
+  const cur = sessions.find((x) => x.id === activeId) || sessions[0];
+  return {
+    ...state,
+    chatSessions: sessions,
+    activeSessionId: activeId,
+    messages: Array.isArray(cur.messages) ? cur.messages : [],
+  };
+}

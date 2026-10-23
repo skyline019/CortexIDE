@@ -1,46 +1,50 @@
 # Cortex · 带持久记忆的 Agent IDE
 
-React 19 + Vite 实现的 Agent IDE：**真实磁盘工作区** + **多标签终端** + **真实 DeepSeek 模型** + **混合检索的分区向量记忆（sqlite-vec ⇄ pgvector 多机）** + **大仓文件监听与外部改动合并预览** + **沙箱化的白名单命令执行** + **SSH 远程工作区**。
+**版本 0.6.4** · React 19 + Vite + Electron · 本机优先的 Agent IDE。
+
+真实磁盘工作区 · 多会话单源 · 多标签终端 · OpenAI 兼容模型（含 DeepSeek）· 分区向量记忆（sqlite-vec ⇄ pgvector）· 文件监听与外部 diff · 白名单命令执行 · SSH 同步 · 文档预览（PDF / Word / Excel·SheetJS / PPT 文本）· 工作流与三模式 Agent。
+
+| 文档 | 说明 |
+| --- | --- |
+| [`docs/INDEX.md`](./docs/INDEX.md) | 文档总索引 |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | **当前**架构（状态机 / 预览边界 / 安全） |
+| [`CONSTRAINTS.md`](./CONSTRAINTS.md) | 质量合同（硬门禁） |
+| [`CHANGELOG.md`](./CHANGELOG.md) | 0.6.4 变更 |
+| [`docs/SMOKE.md`](./docs/SMOKE.md) | 发布冒烟清单 |
+| [`docs/SCORE-0.6.4.md`](./docs/SCORE-0.6.4.md) | 七维复评（综合 ≈ 9.17） |
+
+### 0.6.4 要点
+
+- **门禁**：`npm test` **180** · `lint` **0** · `smoke:mock` 11/11 · `smoke:key` 9/9 · `smoke:exe` 8/8（全硬断言）
+- **原生 ABI**：开发默认 Node；桌面/打包切 Electron；`term-host` 隔离 `node-pty`（宿主崩不拖死 Vite）
+- **记忆**：`memory-store` 门面 + crud/migrate/ann/search；`recall` 统一 `sim`/`score`；`embed('auto')` neural 未就绪走 lexical
+- **Agent**：`agentTools` + `agentLoop`；Chat → `ChatSessionBar` + `ChatMessageList`
+- **会话**：`chatSessions` 唯一数据源；schema v4；Excel SheetJS / PPT 文本抽取 only
+- **安全**：`CORTEX_AUTH_*`；WS `/api/term`·`/api/watch` upgrade 鉴权；SSH 同步≠挂载
+
+下文各节保留能力细节与历史实测；若与上表冲突，**以 0.6.4 要点与 `docs/ARCHITECTURE.md` 为准**。
 
 ### Windows 桌面版（EXE）
 
 ```bash
 npm install
 npm run desktop          # 开发：Electron 窗口 + Vite
-npm run dist:win         # 发版：release/ 下 NSIS 安装包 + Portable 便携包
+npm run dist:dir         # 未打包目录：release/win-unpacked/Cortex.exe
+npm run dist:win         # 发版：NSIS 安装包 + Portable 便携包
 ```
 
-数据在 `%APPDATA%\Cortex\`（`.env`、记忆库）；默认工作区为「文档\Cortex」。产物：`Cortex-*-Setup.exe`（安装）与 `Cortex-*-Portable.exe`（便携）。
+数据在 `%APPDATA%\Cortex\`（`.env`、记忆库）；默认工作区为「文档\Cortex」。
 
-国内若 Electron 下载失败，可先设镜像再装依赖 / 打包：
+国内若 Electron 下载失败，可先设镜像：
 
 ```bash
 set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/
 ```
 
-终端依赖使用 `@lydell/node-pty` 预编译包（npm 别名仍为 `node-pty`），避免本机缺 Spectre 库时编不过。
-
-> 关掉浏览器再回来，它记得你的项目约定；Agent 写文件是真的写到磁盘上；外部 `git checkout` 换了代码，编辑器秒级同步并给你逐行 diff（多个文件合成一次预览）；改完代码它自己跑 `npm run lint`，跑之前先请你点一下「执行」，跑的时候还能选在**工作区副本**里跑；远端那台开发机，用系统 `ssh` 直接连上去看目录和 git 状态，或者新开一个 SSH 终端标签。
+终端依赖使用 `@lydell/node-pty` 预编译包（npm 别名仍为 `node-pty`）。
 
 ![白名单命令执行闭环](./shots/e2e-10-exec-loop.png)
-
-> 十五新增（补）：**文档里的图片终于能看了** —— 相对路径按文档所在目录解析并走 `/api/fs/raw`，
-> README 截图 **全部真加载**（以前滚动容器里只出来 2 张），缺图会写明「哪个路径没找到」。见「[文档里的图片](#文档里的图片第十五轮修)」。
-
-> 十五新增：**上下文引用**——`@` 引用工作区文件 / 记忆 / 技能，`附件` 真上传落盘，
-> **从文件树拖进输入区**就能带上；发送时统一拼成一段有预算的上下文块，**截断与读不到都写在正文里**让模型知道。
-> 顺带修掉一个会「把用户当前问题摘要掉」的压缩 bug。见「[十三、附件 / 工作区 / @引用 / 拖拽引用](#十三附件--工作区-引用--拖拽引用上下文进得去看得见说得清)」。
-
-> 十四新增：**可视化工作流画布**（8 种节点、拖拽连线、SSE 逐节点状态与耗时、跑在真磁盘真命令上）、
-> **Agent 三模式**（`agent` / `ask` / `plan`，plan 的计划能**一键 build 成工作流并执行**）、
-> **技能两层**（系统 5 个只读 + 当前工作区可新建/编辑/启停，开关落 frontmatter）、
-> **提示词两层**（系统基座 + 当前层可编辑，右侧实时看最终拼装结果与 token 估算）。
-> 见「[十二、可视化工作流 / 三模式 Agent / 技能与提示词](#十二可视化工作流--三模式-agent--技能与提示词第十四轮)」。
-
-> 十三新增：**内置 Markdown 渲染器**（回答与 .md 文件都是真排版，不是一段纯文本）、
-> **真文件预览**（PDF 画到 canvas、Word/Excel/PPT 解包成结构化内容、CSV 成表、图片可缩放），
-> 不能预览的格式**如实标注**并给下载。见「[十一、渲染与预览](#十一渲染与预览内置-markdown--真文件预览)」。
 
 ---
 
@@ -48,13 +52,16 @@ set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-buil
 
 ```bash
 cd cortex-ide
-npm install --legacy-peer-deps
-npm run dev            # http://localhost:5173
+npm install
+npm run desktop        # 推荐：Electron（欢迎页选工作区 + API Key）
+# 或仅浏览器：
+npm run dev            # http://127.0.0.1:<port>
 ```
 
-1. 启动后自动连接到**当前目录**（真实文件树、真实磁盘读写、底部终端、chokidar 文件监听）。
-2. 右上角应显示绿色 `DeepSeek · deepseek-chat`，以及 `监听 开 · 记忆库 sqlite-vec`、当前用户 `local`。
-3. 想换目录：设置（⚙）→ 工作区与终端 → 填根目录 → 连接。也可以用环境变量：
+1. 欢迎页填写 API Key（或设置里改模型 / Base URL），选择本机文件夹进入。
+2. 顶栏应显示模型与记忆后端状态；侧栏为真实目录树；底部为终端。
+3. 快捷键：`Ctrl+O` 欢迎页 · `Ctrl+1…9` 最近工作区 · `Ctrl+K` 命令面板 · `Ctrl+J` Agent · `Ctrl+B` 侧栏。
+4. 也可用环境变量指定初始工作区：
 
 ```bash
 CORTEX_WORKSPACE=/path/to/your/project npm run dev
@@ -172,7 +179,7 @@ query ──► 嵌入模型 ─┤ bge-small-zh-v1.5 · q8 · 512 维          
 
 ## 四、百万级记忆：分区 sqlite-vec + 二值量化 ANN + 冷热分层
 
-`server/memory-store.js` + `server/memory-api.js`，数据库默认落在 `.cortex/memory.db`。
+`server/memory-store.js`（存储 / ANN 写路径）+ `server/memory-search.js`（热点 / ANN / BM25 / RRF）+ `server/memory-api.js`，数据库默认落在 `.cortex/memory.db`。
 
 ```
 users ─┬─ memories ──── vec_memories（vec0，rowid = memories.id，分区键 user_id）
@@ -670,9 +677,9 @@ DeepSeek 没有开放 tokenize 端点，本地也没有它的词表，所以「�
 ### 测试：把「省了」和「没丢事」变成会失败的断言
 
 ```bash
-npm test            # 51 项单元测试：压缩/估算器/文风卡 + 命令分词/白名单 + Markdown/高亮/zip/Office/CSV/预览分发（不联网）
-npm run e2e         # 27 个真机任务（真浏览器 + 真模型 + 真磁盘），报告写 docs/e2e-ladder.md
-npm run bench:compress   # 端到端三档 + 门禁（召回不满分 / 超预算 / 删了消息 / 拆了配对 → exit 1）
+npm test                 # 180 项单元测试（不联网）
+npm run e2e              # 真机阶梯（真浏览器 + 真模型 + 真磁盘），报告 docs/e2e-ladder.md
+npm run bench:compress   # 压缩三档门禁（召回 / 预算 / 配对 → 失败则 exit 1）
 ```
 
 单元测试盯的是**不变量**，不是比例：预算不能失效、消息数不能变、`tool_call` 配对不能断、
@@ -756,10 +763,10 @@ npm run bench:compress   # 端到端三档 + 门禁（召回不满分 / 超预�
 | --- | --- |
 | `src/lib/markdown.js` | 块级 + 行内解析器 → AST（标题 / 段落 / 围栏代码 / 缩进代码 / 引用与 `> [!NOTE]` callout / 嵌套列表 / 任务列表 / 表格含列对齐 / 分隔线 / 图片 / 自动链接 / 硬换行 / 转义） |
 | `src/lib/highlight.js` | 语法高亮 → **token 数组**（不是 HTML 字符串，天然免疫 XSS）：JS/TS、JSON、CSS、HTML、Python、Shell、YAML、TOML、SQL、Diff、Markdown |
-| `src/lib/zip.js` | 极简 ZIP 读取（EOCD → 中央目录 → 本地头，`store` / `deflate-raw`，用原生 `DecompressionStream`），zip64 直接报错 |
-| `src/lib/office.js` | docx / xlsx / pptx 解析成结构化块（不需要任何第三方库，只要会用 `DecompressionStream`） |
-| `src/components/Markdown.jsx` | 渲染层：`Markdown`（AI 回答）、`MarkdownDocument`（文件阅读视图，带大纲侧栏 + 复制全文）、`CodeBlock`、`Highlighted` |
-| `src/components/preview/` | `PreviewPane`（按扩展名分发）+ `Previewers`（Word/Excel/PPT/CSV/图片/二进制兜底）+ `PdfPreview`（canvas 渲染）+ `MediaPreview`（自绘视频/音频播放器 + 真波形） |
+| `src/lib/zip.js` | 极简 ZIP 读取（docx / pptx 等 OOXML 用）；zip64 直接报错 |
+| `src/lib/office.js` | Office 解析：docx 自研 XML；**xlsx 走 SheetJS**；pptx 文本抽取；csv 同步解析 |
+| `src/components/Markdown.jsx` | 渲染层：`Markdown` / `MarkdownDocument` / `CodeBlock` / `Highlighted` |
+| `src/components/preview/` | `PreviewPane`（`key={path}` 换文件复位）+ `Previewers` + `PdfPreview` + `MediaPreview` |
 
 ### 支持到什么程度（怎么降级都写在界面上）
 
@@ -768,9 +775,9 @@ npm run bench:compress   # 端到端三档 + 门禁（召回不满分 / 超预�
 | Markdown | 自研解析 → 真 DOM；代码块带语言标签 / 行号 / 复制 / 超 28 行折叠；文件视图带大纲跳转 | 原始 HTML 不渲染 |
 | 代码 / JSON / CSS | 仍是 CodeMirror，可编辑可保存 | — |
 | PDF | `pdfjs-dist` 画到 `<canvas>`，翻页 / 缩放 / 文字层（页下角显示本页抽出的文字） | 加密 PDF 会明确报错，不显示空白 |
-| Word `.docx` | 解 `word/document.xml` → 标题 / 段落（含粗斜体）/ 列表 / 表格，A4 纸样式 | **不还原字体与内嵌图片** |
-| Excel `.xlsx` | 解 `sheetN.xml` + `sharedStrings` → 多工作表切换、行号列、数字右对齐、公式单元格琥珀色高亮 | **不计算公式**：有缓存值就显示值并标「公式」，没有缓存值就显示 `=SUMIF(...)` 原文 |
-| PPT `.pptx` | 按页抽文本框段落，一页一卡 | **不还原版式与图片** |
+| Word `.docx` | 预览用 **docx-preview** 版面还原；Agent 读文件用 **mammoth**→自研回退 | 复杂浮动图 / SmartArt 仍有限 |
+| Excel `.xlsx` | **SheetJS**：多工作表、日期、公式格琥珀色（无缓存则 `=公式原文`）；栏目标注 SheetJS | **不重算公式**；单表预览上限 8000 行并标注截断 |
+| PPT `.pptx` | 按页抽文本与备注（自研 ZIP/XML） | **文本抽取预览，非版式还原**（无图 / 动画 / SmartArt） |
 | CSV / TSV | 引号 / 转义引号 / 字段内换行 / 列数补全，首个非空行当表头 | — |
 | 图片 | 自绘查看器：缩放 −/+/适应/1:1、旋转 90°、拖动平移、Ctrl+滚轮、双击放大复位、透明棋盘格、`320×180 · 0.06 MP` 真实像素尺寸 | 解码失败给占位（不显示破图标） |
 | 视频 `.mp4/.webm/.mov/.mkv/…` | 自绘控件条：播放暂停、缓冲段、拖拽 seek（发 Range 请求）、0.5/1/1.5/2 倍速、音量静音、循环、画中画、全屏、`空格 / ← → / m` 快捷键；顶部显示 `480×270 · 0:02 · 118.8 KB · 411 kbps` | 容器缺解码器时**说明是哪种错**（`MEDIA_ERR_*` 逐条翻译），不黑屏；`.mov/.mkv` 会额外提示 Chromium 常无解码器 |
@@ -1078,32 +1085,26 @@ DEL  /api/attach?path=<rel>     删除（只允许删附件目录里的文件，
 ## 验证
 
 ```bash
-npm run lint         # oxlint：0 error（87 warning 全是「不要用 any / 未用变量」这类风格提示）
-npm run build        # vite build 通过
-npm run smoke        # 88 项：磁盘 + 终端 + DeepSeek + 混合检索 + 分区隔离 + 监听 diff + 白名单执行
-                     #        + 沙箱 + ANN/冷热 + shell 历史 + SSH 同步 + pgvector + 预览器真渲染
-                     #        + 提示词合成/技能开关真进提示词/工作流 DAG 真跑/Plan 解析
-                     #        + 附件真落盘/工作区候选/@引用/拖拽引用/上下文真的进了请求
-                     #        + 文档图片 19/19 真加载 / 缺图占位写明路径
-                     #        + 视频真解码播放拖动 / 音频真波形点击跳转 / 只音轨容器降级 / Range 206
-npm run smoke:mock   # 7 项：不需要 API Key，本地规则引擎跑同一套磁盘/终端/向量能力
-npm run bench        # 记忆库压测，可传条数：npm run bench -- 1000000
-npm run bench:ann 1000000   # ANN 对照精确 KNN：p50 / 召回 / 索引体积 / 增量 / 落盘重载
-npm run clean               # 清理可重建缓存（不动记忆库）
-npm run db:compact          # 记忆库压缩试算（--apply 真替换）
-npm run bench:compress      # 压缩三档：省多少 ↔ 关键事实还在不在（含函数 schema）
-npm run bench:tokenizer     # 用真实 usage 标定 token 估算器（需 API Key）
-npm test                    # 112 项单元测试（压缩 / 估算器 / 文风卡 / 分词白名单 / Markdown / 高亮 / zip / Office
-                     #        / 提示词合成顺序 / 技能增删改 / 模式工具白名单 / 工作流图校验与分支 / Plan 解析与截断恢复
-                     #        / @提及解析与候选排序 / 上下文预算与截断 / 附件名清洗 / 「本轮提问不被压缩」
-                     #        / 文档图片路径解析（含 ../ 越界与外链不改写）
-                     #        / 波形抽点 / 时间与码率 / 媒体错误文案 / HTTP Range 解析，不联网）
+npm test                    # 180 项 node:test（含 chat/ops/memory/agent/recall/term-host…）
+npm run lint                # oxlint（门禁：0 warning）
+npm run build               # vite production build
+npm run dist:dir            # Windows 未打包目录 → release/win-unpacked/Cortex.exe
+npm run smoke:mock          # 无 Key 本地引擎冒烟（11/11）
+npm run smoke:key           # 真 API Key Agent 冒烟（9/9；勿填假 Key）
+npm run smoke:exe           # Cortex.exe 冷启动（8/8；需 dist:dir）
+npm run smoke               # 全量端到端（可选；需 API Key）
+npm run bench               # 记忆库压测：npm run bench -- 1000000
+npm run bench:ann 1000000   # ANN ⇄ 精确 KNN
+npm run bench:compress      # 压缩三档门禁
+npm run bench:tokenizer     # token 估算器标定（需 API Key）
+npm run manifest            # 刷新 docs/manifest.md
+# 清单：docs/SMOKE.md · 质量合同：CONSTRAINTS.md
 ```
 
 > 冒烟脚本不依赖 `networkidle`（这个应用常驻 WebSocket，网络永远不会 idle）：改成等「状态栏连上磁盘 + pty 就绪 + 后台同步跑完」，
 > 并在 2GB 的机器上给 chromium 加了 `--renderer-process-limit=2 --max-old-space-size=320` 之类的内存上限，避免跑到一半 `Target crashed`。
 
-最近一次 `npm run smoke`（**82/82**，真实 DeepSeek + 真实磁盘 + 真实 ssh + 真浏览器渲染）：
+历史一次 `npm run smoke` 实录（数字随环境变化；**以当前脚本与 `docs/SMOKE.md` 为准**）：
 
 ```
 真实 DeepSeek · 真实磁盘 · 真浏览器（72/72）
@@ -1145,10 +1146,12 @@ cortex-ide/
 │  ├─ llm-proxy.js          # /api/llm/*   SSE 透传、服务端密钥注入、取消传播
 │  ├─ fs-api.js             # /api/fs/*    真实文件系统 + 路径越界防护
 │  ├─ terminal.js           # /api/term    WebSocket + node-pty
-│  ├─ memory-store.js       # SQLite + 分区 sqlite-vec + FTS5：同步 / 双路召回 / RRF
-│  ├─ pg-store.js           # Postgres + pgvector：同一契约的 HNSW + ts_rank 实现（数据目录坏了给恢复提示）
-│  ├─ text-index.js         # 分词 / MATCH 表达式 / RRF 融合（两后端共用）
+│  ├─ memory-store.js       # SQLite + 分区 sqlite-vec + FTS5 + ANN 写路径 / CRUD
+│  ├─ memory-search.js      # 热点 / ANN / BM25 / RRF 检索（bind 注入 store）
+│  ├─ pg-store.js           # Postgres + pgvector：同一契约的 HNSW + ts_rank
+│  ├─ text-index.js         # 分词 / MATCH 表达式（两后端共用）
 │  ├─ memory-api.js         # /api/mem/*   多用户隔离 + 后端切换 + 迁移
+│  ├─ auth.js               # 可选公网 Bearer 鉴权
 │  ├─ watch.js              # fs.watch / poll → /api/watch WebSocket（合批 + 订阅 + 模式广播）
 │  ├─ ssh-api.js            # /api/ssh/*  系统 ssh 客户端：探活 / 列目录 / git / 读文件 / 执行 / 增量同步
 │  ├─ ann.js                # 二值量化 ANN：位索引 + popcount 扫描 + int8 精排
@@ -1180,36 +1183,55 @@ cortex-ide/
 ├─ scripts/e2e-report.mjs       # 汇总 .cache/e2e/cases/*.json → docs/e2e-ladder.md
 ├─ scripts/db-compact.mjs   # 记忆库重写压缩（收掉 vec0 chunk 空洞、孤儿行）
 ├─ scripts/clean.mjs        # 清理可重建缓存（dist/.cache/pgdata/ANN 落盘）
-├─ docs/manifest.md         # 源文件清单 + sha256（109 个文件 / 33,820 行，npm run manifest 重生成）
-├─ scripts/smoke-mock.mjs   # 端到端验收（本地引擎，无 Key，7 项）
+├─ docs/
+│  ├─ INDEX.md              # 文档总索引
+│  ├─ ARCHITECTURE.md       # 当前架构（0.6.4）
+│  ├─ SCORE-0.6.4.md        # 七维复评 ≈9.17
+│  ├─ review-latest.md      # 审查快照（勿返工旧稿）
+│  ├─ SMOKE.md              # 发布冒烟清单
+│  ├─ manifest.md           # 源码清单（npm run manifest）
+│  └─ e2e-ladder.md         # 真机阶梯报告
+├─ CONSTRAINTS.md           # 质量合同（硬门禁）
+├─ scripts/smoke-mock.mjs   # 无 Key 冒烟（11/11）
+├─ scripts/smoke-key.mjs    # 真 Key Agent 冒烟（9/9）
+├─ scripts/smoke-exe.mjs    # Cortex.exe 冷启动（8/8）
+├─ CHANGELOG.md             # 版本变更（0.6.4）
 └─ src/
    ├─ lib/
    │  ├─ vector.js          # VectorStore + 神经/哈希嵌入器 + 嵌入缓存
    │  ├─ retrieval.js       # 索引管理、增量构建、服务端 KNN 优先、语义去重
    │  ├─ memoryBackend.js   # /api/mem 客户端 + 增量同步队列（防抖 / 失败回填）
    │  ├─ memory.js          # 记忆模型、蒸馏、混合打分召回
-   │  ├─ agent.js           # 本地意图引擎 + SSE function calling + 工具集（读盘/写盘/跑命令）
+   │  ├─ agent.js           # 门面；实现见 agentTools.js + agentLoop.js
+   │  ├─ agentTools.js      # 工具定义与执行
+   │  ├─ agentLoop.js       # SSE / 本地引擎循环
    │  ├─ diff.js            # 零依赖 LCS 行级 diff（含大文件降级）
    │  ├─ markdown.js        # 自研 Markdown 解析器 → AST（原始 HTML 一律当纯文本）
    │  ├─ highlight.js       # 自研语法高亮 → token 数组（不产出 HTML，免疫 XSS）
    │  ├─ zip.js             # 极简 ZIP 读取（原生 DecompressionStream）
-   │  ├─ office.js          # docx / xlsx / pptx / csv 解析成结构化块
-   │  ├─ preview-kind.js    # 文件 → 预览器类型（纯函数，有单测）
-   │  ├─ plan.js            # Plan 解析 / 校验 / 截断修复 / 计划 → 工作流图
-   │  ├─ promptClient.js    # /api/prompt* + /api/skills 客户端
-   │  ├─ context-refs.js     # 上下文引用的纯逻辑：@解析 / 候选排序 / 预算与截断（全可单测）
-   │  ├─ md-assets.js        # 文档里的图片地址解析（相对文档目录 → /api/fs/raw，可单测）
-   │  ├─ media.js            # 时间/码率/字节格式化、波形抽点、SVG path、媒体错误文案（纯函数，可单测）
-   │  ├─ refsApi.js          # 引用的取数层：读文件、上传附件、正文里的 @提及 兑现成引用
-   │  ├─ watchClient.js     # /api/watch 客户端（自动重连 / 订阅 / 模式回调 / 离线队列）
-│  ├─ tokenize.js        # 中英混合分词（bigram），SQLite 与 Postgres 共用
-   │  ├─ fsClient.js        # /api/fs 客户端 + 目录树构建
-   │  └─ vfs.js             # 沙盒模式的内存文件系统
+   │  ├─ office.js          # docx 自研 / xlsx·SheetJS / pptx 文本抽取 / csv
+   │  ├─ preview-kind.js    # 文件 → 预览器类型
+   │  ├─ plan.js            # Plan 解析 / 截断修复 / 计划 → 工作流
+   │  ├─ promptClient.js    # /api/prompt* + /api/skills
+   │  ├─ context-refs.js    # @解析 / 候选排序 / 上下文预算
+   │  ├─ chatSession.js     # 多会话模型 + 工作区 sessions 落盘
+   │  ├─ recentWorkspaces.js# 最近工作区（Ctrl+1…9）
+   │  ├─ md-assets.js       # 文档图片路径 → /api/fs/raw
+   │  ├─ media.js           # 波形 / 时间 / Range 相关纯函数
+   │  ├─ refsApi.js         # 引用取数 / 附件 / @兑现
+   │  ├─ watchClient.js     # /api/watch 客户端
+   │  ├─ tokenize.js        # 中英 bigram 分词
+   │  ├─ fsClient.js        # /api/fs 客户端
+   │  └─ vfs.js             # 沙盒内存文件系统
    ├─ workers/embedder.worker.js
-   ├─ state/store.jsx       # 状态机 + 持久化 + 真实/沙盒双模式 ops + 审批队列
+   ├─ state/
+   │  ├─ store.jsx           # Provider + 持久化 + reduceRest
+   │  ├─ createOps.js        # 文件/工作区/会话/记忆/执行副作用
+   │  └─ reducers/           # filesTabs · workspace · chat
    └─ components/
-      ├─ Markdown.jsx        # Markdown 渲染 + 代码块（行号/复制/折叠）+ 文件阅读视图（大纲）
-      ├─ preview/            # PreviewPane（分发）/ Previewers（Word·Excel·PPT·CSV·图片·兜底）/ PdfPreview（canvas）/ MediaPreview（视频·音频播放器）
+      ├─ WelcomeScreen.jsx   # 欢迎页：工作区 + API Key + 快捷键提示
+      ├─ Markdown.jsx        # Markdown 渲染 + 代码块 + 文件阅读视图
+      ├─ preview/            # PreviewPane / Previewers / PdfPreview / MediaPreview
       ├─ FileTree.jsx       # 真实目录树
       ├─ TerminalTabs.jsx   # 多标签终端容器（标签 / 命令历史 / SSH 标签）
       ├─ Terminal.jsx       # xterm + pty（visible 隐藏不卸载）

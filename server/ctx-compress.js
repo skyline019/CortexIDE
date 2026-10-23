@@ -21,8 +21,6 @@ const ERROR_RE = /(error|fail|failed|exception|traceback|fatal|warn|断言|失�
 const CODE_RE = /(^\s*(import|export|from|const|let|var|function|class|async|def|return|if|for|while|type|interface)\b|=>|^\s*[})\]]|^\s*\/\/|^\s*#|^\s*\$ )/;
 const DECISION_RE = /(决定|不要|不许|必须|约定|改成|偏好|记住|约束|禁止|规则|接口|字段|端口|路径|命令是|表名|函数名|版本|TODO|下一步)/;
 const IDENT_RE = /[A-Za-z_$][A-Za-z0-9_$.-]{2,}|`[^`]+`/g;
-const CJK_RE = /[\u4e00-\u9fff]/;
-
 /** 从文本里提取检索词（拉丁标识符 + 中文 bigram），用于「相关行」打分 */
 export function extractTerms(text, limit = 40) {
   const set = new Set();

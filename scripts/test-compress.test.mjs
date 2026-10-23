@@ -29,14 +29,15 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const tok = () => createTokenizer({}); // 不传 file → 纯内存，不碰 .cortex
 
 const src = read('server/memory-store.js');
+const annSrc = read('server/memory-ann.js');
+const storeSrc = `${src}\n${annSrc}`; // 压测用合并源码（ANN 已拆出）
 const bigJson = (p, content) =>
   JSON.stringify({ path: p, from: 1, to: content.split('\n').length, totalLines: content.split('\n').length, content });
 
 /* ---------------- 关键符号索引 ---------------- */
 
 test('索引保住「定义行里的函数名」（flushAnn 曾经被一堆 const 挤掉）', () => {
-  const lines = src.split('\n'); // 用全文：索引本来就是从「被省略的行」里抽的
-  const idx = keyIndex(lines);
+  const idx = keyIndex(annSrc.split('\n')); // ANN 已拆到 memory-ann.js
   assert.ok(idx.includes('flushAnn'), `索引里没有 flushAnn：${idx.slice(0, 20).join(' · ')}`);
 });
 
@@ -97,9 +98,9 @@ test('digestText：抽取式摘要保留「决策/约束」句', () => {
 /* ---------------- 工具 schema 精简 ---------------- */
 
 test('trimTools：只截 description，参数名 / 类型 / required 一律不动', () => {
-  const agentSrc = read('src/lib/agent.js');
+  const agentSrc = read('src/lib/agentTools.js');
   const start = agentSrc.indexOf('[', agentSrc.indexOf('const TOOL_SPECS = '));
-  // agent.js 里是 JS 对象字面量（单引号、无引号键名），不是 JSON —— 用 Function 求值取出来
+  // agentTools.js 里是 JS 对象字面量（单引号、无引号键名），不是 JSON —— 用 Function 求值取出来
   const tools = new Function(`return ${agentSrc.slice(start, agentSrc.indexOf('\n];', start) + 2)}`)();
   const before = JSON.parse(JSON.stringify(tools));
   const r = trimTools(tools);
@@ -154,7 +155,7 @@ const makeConversation = () => [
   { role: 'system', content: '你是 Cortex。' },
   { role: 'user', content: '看看这些文件，给我三条要修的。' },
   { role: 'assistant', content: '', tool_calls: [{ id: 'c1', type: 'function', function: { name: 'read_file', arguments: '{"path":"server/memory-store.js"}' } }] },
-  { role: 'tool', tool_call_id: 'c1', content: bigJson('server/memory-store.js', src) },
+  { role: 'tool', tool_call_id: 'c1', content: bigJson('server/memory-store.js', storeSrc) },
   { role: 'assistant', content: '', tool_calls: [{ id: 'c2', type: 'function', function: { name: 'run_command', arguments: '{"cmd":"npm run lint"}' } }] },
   { role: 'tool', tool_call_id: 'c2', content: JSON.stringify({ cmd: 'npm run lint', ok: true, code: 0, stdout: 'x'.repeat(20000) }) },
   { role: 'assistant', content: '一些较早的、很长很长的回答。'.repeat(200) },
@@ -199,8 +200,8 @@ test('compressPayload：balanced 真的把大工具回传压到预算内', () =>
 
 test('compressPayload：同一文件重复读取只留最新一份（顺序 bug 回归测试）', () => {
   const t = tok();
-  const older = bigJson('server/memory-store.js', src);
-  const newer = bigJson('server/memory-store.js', src.replace('function flushAnn(', 'export function flushAnn('));
+  const older = bigJson('server/memory-ann.js', annSrc);
+  const newer = bigJson('server/memory-ann.js', annSrc.replace('function flushAnn(', 'export function flushAnn('));
   const msgs = [
     { role: 'user', content: '看看这个文件' },
     { role: 'assistant', content: '', tool_calls: [{ id: 'a', type: 'function', function: { name: 'read_file', arguments: '{}' } }] },
@@ -270,7 +271,6 @@ test('style-profile：短问用户和长问用户拿到不同的「回答长度�
 /* ---------------- 真实语料上的总体行为 ---------------- */
 
 test('真实 README：压到 4000 字符以内，函数名和命令都还在', () => {
-  const t = tok();
   const readme = read('README.md');
   const terms = extractTerms('压缩后的关键函数名还在吗');
   const r = compressText(readme, { terms, budget: 4000 });

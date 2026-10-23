@@ -70,6 +70,8 @@ export default function WorkflowStudio({ onClose }) {
   const dragRef = useRef(null);
   const abortRef = useRef(null);
 
+  const [starters, setStarters] = useState([]);
+
   const refreshList = useCallback(async () => {
     try {
       const data = await fetchWorkflows();
@@ -83,8 +85,6 @@ export default function WorkflowStudio({ onClose }) {
       toast(`加载工作流失败：${e.message}`, 'err');
     }
   }, [toast]);
-
-  const [starters, setStarters] = useState([]);
 
   useEffect(() => {
     refreshList();

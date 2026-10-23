@@ -13,6 +13,7 @@
  *   - 目录级订阅：客户端只关心展开的目录，服务端按订阅过滤，事件量能降一个数量级
  */
 import path from 'node:path';
+import { checkAuth } from './auth.js';
 
 const IGNORED = [
   /node_modules/,
@@ -160,6 +161,13 @@ export function watchPlugin({ workspace }) {
       httpServer.on('upgrade', (req, socket, head) => {
         const url = new URL(req.url, 'http://localhost');
         if (url.pathname !== '/api/watch') return;
+        // Connect middleware 不覆盖 upgrade；鉴权开启时必须在此校验（含 ?access_token=）
+        const auth = checkAuth(req);
+        if (!auth.ok) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+          socket.destroy();
+          return;
+        }
         wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
       });
       wss.on('connection', (ws) => {

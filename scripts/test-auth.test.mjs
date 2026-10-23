@@ -119,3 +119,33 @@ test('query access_token 亦可（WebSocket / EventSource）', () => {
     assert.equal(r.ok, true);
   });
 });
+
+test('负向：伪造 Bearer 失败，即使带 x-cortex-user', () => {
+  withEnv(
+    {
+      CORTEX_AUTH_TOKEN: 'real-secret',
+      CORTEX_AUTH_TOKENS: undefined,
+      CORTEX_AUTH_TRUST_USER_HEADER: undefined,
+    },
+    () => {
+      const r = checkAuth({
+        headers: {
+          authorization: 'Bearer fake-token',
+          'x-cortex-user': 'admin',
+        },
+        url: '/api/fs/info',
+      });
+      assert.equal(r.ok, false);
+    },
+  );
+});
+
+test('负向：多用户表错误令牌拒绝', () => {
+  withEnv({ CORTEX_AUTH_TOKEN: undefined, CORTEX_AUTH_TOKENS: 'alice:tok-a' }, () => {
+    const r = checkAuth({
+      headers: { 'x-cortex-token': 'tok-wrong', 'x-cortex-user': 'alice' },
+      url: '/api/mem/list',
+    });
+    assert.equal(r.ok, false);
+  });
+});

@@ -117,17 +117,18 @@ const qMs = performance.now() - tQ;
 /* ---------- 增量落盘：改 N 条之后只写这几个字节 ---------- */
 const tFlush = performance.now();
 const flushed = store.flushAnnSaves(); // 立刻刷，不等 1.2s 定时器
-const flushMs = performance.now() - tFlush;
+const _flushMs = performance.now() - tFlush;
+void _flushMs;
 const flushInfo = flushed[0] || {};
 
 /* ---------- 重载：等价于「进程重启后第一次查询」 ---------- */
 const stBefore = store.stats(); // 重载会重置计数，先留一份
 const reload = store.reloadAnnIndex('bench');
 const tR = performance.now();
-const afterReload = store.searchMemories({ userId: 'bench', workspace: '/bench', vector: vecOf(4242), k: 10, mode: 'vector', ann: 'on' });
+store.searchMemories({ userId: 'bench', workspace: '/bench', vector: vecOf(4242), k: 10, mode: 'vector', ann: 'on' });
 const reloadQueryMs = performance.now() - tR;
 
-const st = store.stats();
+store.stats();
 console.log('\n档位         p50     均值     tier');
 if (!SKIP_EXACT) console.log(`${exact.label.padEnd(12)} ${String(exact.p50).padStart(5)}ms ${String(exact.mean).padStart(5)}ms  ${exact.tier}`);
 console.log(`${ann.label.padEnd(12)} ${String(ann.p50).padStart(5)}ms ${String(ann.mean).padStart(5)}ms  ${ann.tier}${ann.ann ? ` · 候选 ${ann.ann.candidates} · 索引 ${(ann.ann.bytes / 1048576).toFixed(1)}MB · 建索引 ${ann.ann.buildMs}ms` : ''}`);
@@ -150,7 +151,6 @@ const tRe0 = performance.now();
 store.searchMemories({ userId: 'bench', workspace: '/bench', vector: vecOf(4242), k: 10, mode: 'vector', ann: 'on' });
 const rebuildMs = performance.now() - tRe0;
 
-const disk = st.annPersist || {};
 console.log(
   `\n落盘重载：fromFile=${reload.fromFile} · 读盘 ${reload.loadMs}ms · 补差 改${reload.catchUp?.ups ?? 0}/删${reload.catchUp?.dels ?? 0}` +
     ` · 索引 ${reload.size} 条 · 重载后首查 ${reloadQueryMs.toFixed(1)}ms`,

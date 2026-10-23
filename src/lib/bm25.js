@@ -83,7 +83,9 @@ export function fuseRrf(vecRanked, bmRanked, { k = 60, limit = 20 } = {}) {
   };
   vecRanked.forEach((h, i) => {
     const r = row(h.id);
-    r.sim = h.score;
+    const s = typeof h.score === 'number' ? h.score : typeof h.sim === 'number' ? h.sim : 0;
+    r.sim = s;
+    r.score = s;
     r.vRank = i + 1;
     r.rrf += 1 / (k + i + 1);
   });

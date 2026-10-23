@@ -2,10 +2,10 @@ import React, { createContext, useContext, useEffect, useMemo, useReducer, useRe
 import { seedFiles, langOf, baseName } from '../lib/vfs.js';
 import { seedMemories } from '../lib/memory.js';
 import { installFetchAuth, setApiAuth } from '../lib/apiAuth.js';
-import { saveChatStoreToWorkspace, makeSession } from '../lib/chatSession.js';
+import { saveChatStoreToWorkspace } from '../lib/chatSession.js';
 import { reduceFilesTabs } from './reducers/filesTabs.js';
 import { reduceWorkspace } from './reducers/workspace.js';
-import { reduceChat, sealChatForPersist } from './reducers/chat.js';
+import { reduceChat, sealChatForPersist, coerceChatSource } from './reducers/chat.js';
 import { createOps } from './createOps.js';
 
 installFetchAuth();
@@ -118,30 +118,6 @@ function hydrate(raw) {
     messages: Array.isArray(raw.messages) ? raw.messages : [],
     sessions: Array.isArray(raw.sessions) ? raw.sessions : [],
     version: SCHEMA_VERSION,
-  };
-}
-
-/** 启动时把旧双轨数据收敛为单一会话源 */
-function coerceChatSource(state) {
-  let sessions = Array.isArray(state.chatSessions) ? state.chatSessions : [];
-  if (!sessions.length && Array.isArray(state.messages) && state.messages.length) {
-    const s = makeSession({ messages: state.messages });
-    return { ...state, chatSessions: [s], activeSessionId: s.id, messages: s.messages };
-  }
-  if (!sessions.length) {
-    const s = makeSession();
-    return { ...state, chatSessions: [s], activeSessionId: s.id, messages: [] };
-  }
-  const activeId =
-    state.activeSessionId && sessions.some((x) => x.id === state.activeSessionId)
-      ? state.activeSessionId
-      : sessions[sessions.length - 1].id;
-  const cur = sessions.find((x) => x.id === activeId) || sessions[0];
-  return {
-    ...state,
-    chatSessions: sessions,
-    activeSessionId: activeId,
-    messages: Array.isArray(cur.messages) ? cur.messages : [],
   };
 }
 

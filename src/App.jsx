@@ -172,7 +172,7 @@ export default function App() {
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [workflowOpen, setWorkflowOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [backend, setBackend] = useState(null);
+  const [, setBackend] = useState(null);
   const [extChanges, setExtChanges] = useState([]); // 外部改动合并预览
   const isDesktop = typeof document !== 'undefined' && document.documentElement.classList.contains('is-desktop');
   const [showWelcome, setShowWelcome] = useState(() => isDesktop || loadRecentWorkspaces().length === 0);

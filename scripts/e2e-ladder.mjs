@@ -229,7 +229,7 @@ const CASES = [
     level: '中',
     title: '代码审查（定位真 bug，不许改文件）',
     prompt: '读 .cache/e2e/bug.js，指出里面的并发缺陷：说清楚什么情况下会出错、后果是什么、怎么改（只给方案，不要改文件）。',
-    check: ({ answer, files }) => {
+    check: ({ answer, files: _files }) => {
       const ok =
         hasAny(answer, '并发', '竞态', 'race', '同时', '并行') &&
         hasAny(answer, 'cache', '缓存') &&

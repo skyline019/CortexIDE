@@ -1,24 +1,19 @@
 /**
- * 为 Electron ABI 重编原生模块。失败不阻断 npm install（Windows 常缺 Python/VS Build Tools）。
- * 发版前请手动跑：npm run rebuild:native
+ * npm install 后：保证 **Node ABI**（Vite / 测试默认）。
+ * Electron ABI 只在桌面启动或打包前切换（见 rebuild:native / predesktop）。
+ *
+ * 旧行为在此直接 install-app-deps → 开发时加载 Electron 编的 .node → 堆损坏。
  */
 import { spawnSync } from 'node:child_process';
-import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
-const require = createRequire(import.meta.url);
-let builderBin;
-try {
-  builderBin = require.resolve('electron-builder/cli.js');
-} catch {
-  process.exit(0);
-}
+const here = path.dirname(fileURLToPath(import.meta.url));
+const script = path.join(here, 'ensure-native-abi.mjs');
 
-const r = spawnSync(process.execPath, [builderBin, 'install-app-deps'], {
+const r = spawnSync(process.execPath, [script, '--target=node', '--quiet'], {
   stdio: 'inherit',
-  shell: false,
+  cwd: path.resolve(here, '..'),
   env: process.env,
 });
-if (r.status !== 0) {
-  console.warn('[cortex] electron native rebuild 未完成（可稍后 npm run rebuild:native）。桌面发版需要 Python + VS Build Tools。');
-}
-process.exit(0);
+process.exit(r.status === null ? 0 : r.status);

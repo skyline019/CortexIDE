@@ -326,27 +326,38 @@ function lexicalCached(text) {
  */
 export async function embed(texts, { provider = 'auto', isQuery = false } = {}) {
   const list = texts.map((t) => String(t || '').slice(0, 512));
-  if (provider !== 'lexical') {
-    const ready = await neural.ensure();
-    if (ready) {
-      try {
-        const keyed = list.map((t) => `${isQuery ? 'q' : 'd'}:${t}`);
-        const missing = [];
-        list.forEach((t, i) => {
-          if (!cache.has(keyed[i])) missing.push(i);
+  // auto：神经模型就绪才用；加载中不阻塞检索（后台 warmup 继续），立刻走 lexical
+  // neural：显式等待 ensure（含下载），失败再回落
+  let useNeural = false;
+  if (provider === 'neural') {
+    useNeural = await neural.ensure();
+  } else if (provider === 'auto') {
+    if (neural.status === 'ready') useNeural = true;
+    else if (neural.status === 'idle') neural.ensure(); // 预热，不等待
+  } else if (provider !== 'lexical' && neural.status === 'ready') {
+    useNeural = true;
+  }
+  if (useNeural) {
+    try {
+      const keyed = list.map((t) => `${isQuery ? 'q' : 'd'}:${t}`);
+      const missing = [];
+      list.forEach((t, i) => {
+        if (!cache.has(keyed[i])) missing.push(i);
+      });
+      if (missing.length) {
+        const vecs = await neural.embed(
+          missing.map((i) => list[i]),
+          { isQuery },
+        );
+        missing.forEach((idx, j) => {
+          cache.set(keyed[idx], Array.from(vecs[j], (v) => Math.round(v * 10000) / 10000));
         });
-        if (missing.length) {
-          const vecs = await neural.embed(missing.map((i) => list[i]), { isQuery });
-          missing.forEach((idx, j) => {
-            cache.set(keyed[idx], Array.from(vecs[j], (v) => Math.round(v * 10000) / 10000));
-          });
-          scheduleCacheSave();
-        }
-        const vectors = list.map((t, i) => Float32Array.from(cache.get(keyed[i])));
-        return { vectors, provider: 'neural' };
-      } catch (err) {
-        console.warn('[cortex] 神经嵌入失败，回落到本地向量：', err.message);
+        scheduleCacheSave();
       }
+      const vectors = list.map((t, i) => Float32Array.from(cache.get(keyed[i])));
+      return { vectors, provider: 'neural' };
+    } catch (err) {
+      console.warn('[cortex] 神经嵌入失败，回落到本地向量：', err.message);
     }
   }
   return { vectors: list.map(lexicalCached), provider: 'lexical' };

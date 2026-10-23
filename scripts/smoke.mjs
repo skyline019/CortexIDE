@@ -6,7 +6,6 @@
  */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
-import path from 'node:path';
 
 const URL = process.env.CORTEX_URL || 'http://localhost:5173/';
 const errors = [];
@@ -60,19 +59,27 @@ check(
 );
 
 // 本机 2GB 内存：关掉 GPU / 扩展，把 /dev/shm 换到磁盘，少占一份共享内存
-const browser = await chromium.launch({
-  args: [
+async function launchBrowser() {
+  const args = [
     '--no-sandbox',
     '--disable-dev-shm-usage',
     '--disable-gpu',
     '--disable-extensions',
-    // 2GB 内存的机器：限制渲染进程数量和 V8 堆，避免跑到一半 Target crashed
     '--renderer-process-limit=2',
     '--js-flags=--max-old-space-size=320',
     '--disable-background-networking',
     '--disable-features=Translate,BackForwardCache,MediaRouter,OptimizationHints',
-  ],
-});
+  ];
+  for (const opts of [{ channel: 'chrome' }, { channel: 'msedge' }, {}]) {
+    try {
+      return await chromium.launch({ headless: true, args, ...opts });
+    } catch {
+      /* try next */
+    }
+  }
+  throw new Error('无法启动浏览器：请安装 Chrome，或 npx playwright install chromium');
+}
+const browser = await launchBrowser();
 let page = await browser.newPage({ viewport: { width: 1600, height: 980 } });
 let expectImageMiss = false; // 缺图那一段会主动请求一个不存在的图片，控制台的红字不算产品错误
 const IGNORE = [
@@ -619,7 +626,6 @@ check(
 
 const stDisk = await api('mem/status');
 const diskInfo = stDisk.json.annPersist || {};
-const annDisk = (stDisk.json.ann || [])[0] || {};
 const reloadAnn = await api('mem/ann', { action: 'reload' });
 const afterReload = await api('mem/search', { vector: vecB, query: '', k: 3, mode: 'vector', ann: 'on' });
 check(

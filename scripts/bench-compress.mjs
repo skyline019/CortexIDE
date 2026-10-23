@@ -108,7 +108,7 @@ const TOOLS = [
 const out = compressPayload({ messages, strength, tokenizer, styleCard, tools: TOOLS });
 // 索引里的 `npm run lint|dev` 是合并写法，语义等价：校验前先展开，避免误判
 const expandCommands = (text) =>
-  text.replace(/\b(npm run|pnpm|npm)\s+([\w:.\-]+(?:\|[\w:.\-]+)+)/g, (_, p, subs) =>
+  text.replace(/\b(npm run|pnpm|npm)\s+([\w:.-]+(?:\|[\w:.-]+)+)/g, (_, p, subs) =>
     subs.split('|').map((x) => `${p} ${x}`).join(' / '),
   );
 const all = expandCommands(out.messages.map((m) => (typeof m.content === 'string' ? m.content : '')).join('\n'));

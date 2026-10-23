@@ -11,7 +11,18 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const SKIP_DIRS = new Set(['node_modules', '.cortex', '.cache', 'dist', 'shots', '.git', 'out', 'build']);
+const SKIP_DIRS = new Set([
+  'node_modules',
+  '.cortex',
+  '.cache',
+  'dist',
+  'release',
+  'shots',
+  '.git',
+  'out',
+  'build',
+  'pdfjs', // public/pdfjs 由 npm run pdfjs:sync 拷贝，不计入源码
+]);
 const EXTS = ['.js', '.jsx', '.css', '.html', '.md', '.mjs', '.json'];
 const GROUPS = {
   server: 'server/ — 后端（Node，无框架，Vite 中间件挂载）',
@@ -50,7 +61,7 @@ const out = [
   '自动生成，用于确认「哪些文件属于这个项目」以及每份文件的行数 / 字节数 / 内容指纹。',
   `- 生成时间：${stamp}`,
   `- 文件总数：**${files.length}**，总行数：**${totalLines.toLocaleString('en-US')}**`,
-  '- 指纹为 sha256 前 12 位；`node_modules` / `.cortex` / `dist` / `shots` / `.env` 不计入。',
+  '- 指纹为 sha256 前 12 位；不计 `node_modules` / `.cortex` / `dist` / `release` / `shots` / `public/pdfjs` / `.env`。',
   '',
   '重新生成：`npm run manifest`',
   '',

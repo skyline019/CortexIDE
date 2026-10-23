@@ -186,22 +186,40 @@ export async function recall(query, memories, { k = 5, minScore = 0.12, provider
 
   // 向量余弦值通常挤在 0.4~0.9 的窄区间，直接线性加权会被重要度/频次盖过。
   // 这里先做候选集内 min-max 归一化，让"语义最接近"真正占主导。
+  // 各引擎字段不统一：vector/searchServer 用 score，lexical/fuseRrf 用 sim（+ rrf）
+  const hitSim = (r) => {
+    if (typeof r?.score === 'number' && Number.isFinite(r.score)) return r.score;
+    if (typeof r?.sim === 'number' && Number.isFinite(r.sim)) return r.sim;
+    if (typeof r?.rrf === 'number' && Number.isFinite(r.rrf)) return r.rrf;
+    return 0;
+  };
   const best = new Map();
   for (const r of ranked) {
-    if (!best.has(r.id) || best.get(r.id).score < r.score) best.set(r.id, r);
+    if (!best.has(r.id) || hitSim(best.get(r.id)) < hitSim(r)) best.set(r.id, r);
   }
   ranked = [...best.values()];
+  if (!ranked.length) {
+    return {
+      results: [],
+      tookMs: tookMs || Math.round((performance.now() - started) * 100) / 100,
+      engine: engine === 'vector' ? vEngine || 'vector' : engine,
+      mode: engine === 'vector' ? vectorMode : 'bm25',
+      dim,
+    };
+  }
 
   // 混合检索时用 RRF 融合分做"匹配度"信号；纯向量模式下用余弦
   const useRrf = ranked.every((r) => typeof r.rrf === 'number');
-  const sig = ranked.map((r) => (useRrf ? r.rrf : r.score));
+  const sig = ranked.map((r) => (useRrf ? r.rrf : hitSim(r)));
   const lo = Math.min(...sig);
   const hi = Math.max(...sig);
   const span = hi - lo;
   const norm = (v) => (span > 1e-9 ? (v - lo) / span : 1);
 
   const results = ranked
-    .map(({ id, score: sim, rrf, vRank, bRank, bm25 }) => {
+    .map((hit) => {
+      const { id, rrf, vRank, bRank, bm25 } = hit;
+      const sim = hitSim(hit);
       const m = byId.get(id);
       if (!m) return null;
       const ageDays = (now - m.updatedAt) / 86400000;

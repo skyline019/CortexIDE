@@ -67,7 +67,7 @@ const fit = (rows, ridge) => {
 };
 const pred = (w, f) => xOf(f).reduce((a, v, i) => a + v * w[i], 0);
 // 留一交叉验证：11 条拟合，1 条检验
-let loo = 0, looBase = 0;
+let _loo = 0, _looBase = 0;
 for (const rid of [1, 20, 80]) {
   let e = 0;
   for (let i = 0; i < S.length; i += 1) {
@@ -75,8 +75,10 @@ for (const rid of [1, 20, 80]) {
     e += Math.abs(pred(w, S[i].f) - S[i].y) / S[i].y;
   }
   console.log(`ridge=${rid} 留一误差 ${(e / S.length * 100).toFixed(1)}%`);
-  if (rid === 20) loo = e / S.length * 100;
+  if (rid === 20) _loo = e / S.length * 100;
 }
+void _loo;
+void _looBase;
 const wBase = [0.95, 0.32, 0.45, 1.05]; // 与 server/tokenizer.js 的 DEFAULT_W 保持一致（newline 0.1 上面单加）
 let eb = 0;
 for (const s of S) { const p = pred(wBase, s.f) + s.f[3] * 0.1; eb += Math.abs(p - s.y) / s.y; }
