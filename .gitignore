@@ -41,3 +41,5 @@ src/**/_backup/
 # 自用评估 / 打分文档（不上仓库）
 docs/SCORE-*.md
 .local/
+
+scripts/_patch-smoke-launch.mjs
