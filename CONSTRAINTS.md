@@ -1,7 +1,7 @@
 # Cortex 质量合同（CONSTRAINTS）
 
 版本对齐：**0.6.4（冲 9+ 落地）**。发布与合并前必须满足下列硬门槛；与 [`docs/SMOKE.md`](docs/SMOKE.md) 自动化段一致。  
-七维复评证据：[`docs/SCORE-0.6.4.md`](docs/SCORE-0.6.4.md)（综合 ≈ **9.17**）。
+七维复评证据：[`docs/SCORE-0.6.4.md`](docs/SCORE-0.6.4.md)（最新综合 ≈ **9.24**；上轮 9.17）。
 
 ## 测试
 
