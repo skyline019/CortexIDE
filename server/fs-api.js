@@ -48,11 +48,13 @@ const MIME = MIME_TYPES;
 /**
  * `/api/fs/raw` 的 Content-Disposition。
  * 预览（img/video）只回 `inline`；下载才带文件名。
- * 文件名必须用 path.basename —— Windows 上 `abs.split('/').pop()` 会得到整段盘符路径。
+ * 文件名必须跨平台取 basename：Linux 上 `path.basename('E:\\a\\b.png')` 不会按 `\` 切开，
+ * 会把整段盘符路径塞进下载头；先把 `\` 归一成 `/` 再 basename。
  */
 export function rawContentDisposition(abs, { download = false } = {}) {
   if (!download) return 'inline';
-  return `attachment; filename*=UTF-8''${encodeURIComponent(path.basename(abs))}`;
+  const base = path.basename(String(abs || '').replace(/\\/g, '/'));
+  return `attachment; filename*=UTF-8''${encodeURIComponent(base)}`;
 }
 
 /**
